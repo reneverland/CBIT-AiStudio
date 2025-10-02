@@ -29,7 +29,9 @@ COPY . .
 
 # 创建必要的目录并设置权限
 RUN mkdir -p /app/downloads /app/static/uploads /app/instance && \
-    chmod 755 /app/instance && \
+    chmod 777 /app/instance && \
+    chmod 777 /app/downloads && \
+    chmod 777 /app/static/uploads && \
     chown -R root:root /app
 
 # 设置数据库路径为容器内默认位置

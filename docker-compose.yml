@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  cbit-aistudio:
+  app:
     build: .
     container_name: cbit-aistudio
     ports:
