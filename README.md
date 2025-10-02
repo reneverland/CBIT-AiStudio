@@ -1,9 +1,9 @@
 # BaiduCBIT - 基于ComfyUI的企业级AI图像生成平台
 
-[![GitHub stars](https://img.shields.io/github/stars/reneverland/local_baiducbit?style=social)](https://github.com/reneverland/local_baiducbit)
-[![GitHub forks](https://img.shields.io/github/forks/reneverland/local_baiducbit?style=social)](https://github.com/reneverland/local_baiducbit)
-[![GitHub issues](https://img.shields.io/github/issues/reneverland/local_baiducbit)](https://github.com/reneverland/local_baiducbit/issues)
-[![GitHub license](https://img.shields.io/github/license/reneverland/local_baiducbit)](https://github.com/reneverland/local_baiducbit/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/reneverland/CBIT-AiStudio?style=social)](https://github.com/reneverland/CBIT-AiStudio)
+[![GitHub forks](https://img.shields.io/github/forks/reneverland/CBIT-AiStudio?style=social)](https://github.com/reneverland/CBIT-AiStudio)
+[![GitHub issues](https://img.shields.io/github/issues/reneverland/CBIT-AiStudio)](https://github.com/reneverland/CBIT-AiStudio/issues)
+[![GitHub license](https://img.shields.io/github/license/reneverland/CBIT-AiStudio)](https://github.com/reneverland/CBIT-AiStudio/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Latest-orange.svg)](https://github.com/comfyanonymous/ComfyUI)
@@ -332,7 +332,7 @@ result = requests.get(f'/api/result?prompt_id={response.json()["prompt_id"]}')
 
 - **项目维护者**: BaiduCBIT Team
 - **开发者**: [@reneverland](https://github.com/reneverland) - Full-stack Developer · AI Fine-tuning · Multimodal Systems
-- **GitHub仓库**: [https://github.com/reneverland/local_baiducbit](https://github.com/reneverland/local_baiducbit)
+- **GitHub仓库**: [https://github.com/reneverland/CBIT-AiStudio](https://github.com/reneverland/CBIT-AiStudio)
 - **技术支持**: 通过GitHub Issues提交问题和建议
 - **文档更新**: 2025年10月
 
@@ -344,10 +344,10 @@ result = requests.get(f'/api/result?prompt_id={response.json()["prompt_id"]}')
 
 # BaiduCBIT - Enterprise-Level AI Image Generation Platform Based on ComfyUI
 
-[![GitHub stars](https://img.shields.io/github/stars/reneverland/local_baiducbit?style=social)](https://github.com/reneverland/local_baiducbit)
-[![GitHub forks](https://img.shields.io/github/forks/reneverland/local_baiducbit?style=social)](https://github.com/reneverland/local_baiducbit)
-[![GitHub issues](https://img.shields.io/github/issues/reneverland/local_baiducbit)](https://github.com/reneverland/local_baiducbit/issues)
-[![GitHub license](https://img.shields.io/github/license/reneverland/local_baiducbit)](https://github.com/reneverland/local_baiducbit/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/reneverland/CBIT-AiStudio?style=social)](https://github.com/reneverland/CBIT-AiStudio)
+[![GitHub forks](https://img.shields.io/github/forks/reneverland/CBIT-AiStudio?style=social)](https://github.com/reneverland/CBIT-AiStudio)
+[![GitHub issues](https://img.shields.io/github/issues/reneverland/CBIT-AiStudio)](https://github.com/reneverland/CBIT-AiStudio/issues)
+[![GitHub license](https://img.shields.io/github/license/reneverland/CBIT-AiStudio)](https://github.com/reneverland/CBIT-AiStudio/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Latest-orange.svg)](https://github.com/comfyanonymous/ComfyUI)
@@ -668,7 +668,7 @@ Issues and Pull Requests are welcome. Please ensure:
 
 - **Project Maintainer**: BaiduCBIT Team
 - **Developer**: [@reneverland](https://github.com/reneverland) - Full-stack Developer · AI Fine-tuning · Multimodal Systems
-- **GitHub Repository**: [https://github.com/reneverland/local_baiducbit](https://github.com/reneverland/local_baiducbit)
+- **GitHub Repository**: [https://github.com/reneverland/CBIT-AiStudio](https://github.com/reneverland/CBIT-AiStudio)
 - **Technical Support**: Submit issues and suggestions via GitHub Issues
 - **Documentation Updated**: October 2025
 
