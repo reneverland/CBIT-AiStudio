@@ -2,7 +2,31 @@
 
 ## 🚀 快速部署
 
-### 方式一：Docker Compose（推荐）
+### 方式一：宝塔面板部署（推荐）
+
+适用于使用宝塔面板的用户，提供图形化管理界面和一键部署：
+
+```bash
+# 一键部署脚本
+curl -sSL https://raw.githubusercontent.com/reneverland/CBIT-AiStudio/main/baota_deploy.sh | bash
+
+# 或者手动执行
+git clone https://github.com/reneverland/CBIT-AiStudio.git
+cd CBIT-AiStudio
+chmod +x baota_deploy.sh
+./baota_deploy.sh
+```
+
+📖 **详细指南**: [宝塔面板部署指南](./BAOTA_DEPLOYMENT.md)
+
+**宝塔部署优势**:
+- 🎯 图形化管理界面
+- 🔧 自动配置Nginx反向代理
+- 📊 实时监控和日志查看
+- 🔒 SSL证书自动申请
+- 🔄 一键更新和备份
+
+### 方式二：Docker Compose
 
 ```bash
 # 1. 克隆项目
