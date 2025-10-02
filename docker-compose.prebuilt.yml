@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prebuilt
+    container_name: cbit-aistudio-prebuilt
+    ports:
+      - "5000:5000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5000
+      - DEBUG=false
+      - SERVER_URL=http://113.106.62.42:9500
+      - SECRET_KEY=production-secret-key-2025
+    # 只挂载必要的目录，数据库在容器内
+    volumes:
+      - ./downloads:/app/downloads:rw
+      - ./static/uploads:/app/static/uploads:rw
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - cbit-network
+
+networks:
+  cbit-network:
+    driver: bridge
+    name: cbit-prebuilt-network

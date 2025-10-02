@@ -1,0 +1,64 @@
+FROM python:3.12-slim
+
+# 设置工作目录
+WORKDIR /app
+
+# 设置环境变量
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV HOST=0.0.0.0
+ENV PORT=5000
+ENV DEBUG=False
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    gcc g++ curl sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制requirements并安装Python依赖
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 复制应用代码
+COPY . .
+
+# 创建必要的目录
+RUN mkdir -p /app/db /app/downloads /app/static/uploads
+
+# 复制预置数据库到容器内
+COPY db/prebuilt_cache.db /app/db/prebuilt_cache.db
+
+# 设置数据库文件权限
+RUN chmod 666 /app/db/prebuilt_cache.db && \
+    chmod 777 /app/db /app/downloads /app/static/uploads
+
+# 设置数据库环境变量（使用预置数据库）
+ENV SQLALCHEMY_DATABASE_URI=sqlite:///db/runtime_cache.db
+
+# 暴露端口
+EXPOSE 5000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# 创建启动脚本，确保数据库设置正确
+RUN echo '#!/bin/bash\n\
+echo "🚀 启动CBIT-AiStudio (预置数据库版)..."\n\
+echo "🔧 检查预置数据库..."\n\
+if [ -f /app/db/prebuilt_cache.db ]; then\n\
+    echo "✅ 预置数据库存在: /app/db/prebuilt_cache.db"\n\
+    ls -la /app/db/prebuilt_cache.db\n\
+else\n\
+    echo "❌ 预置数据库不存在"\n\
+    exit 1\n\
+fi\n\
+echo "🔧 确保目录权限..."\n\
+chmod 777 /app/db /app/downloads /app/static/uploads\n\
+chmod 666 /app/db/prebuilt_cache.db\n\
+echo "✅ 权限设置完成"\n\
+echo "🚀 启动应用..."\n\
+exec python app_prebuilt_db.py' > /app/start_prebuilt.sh && chmod +x /app/start_prebuilt.sh
+
+# 使用预置数据库启动脚本
+CMD ["/app/start_prebuilt.sh"]
