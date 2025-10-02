@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBIT AI Studio - 智能创作平台</title>
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- 现代字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 图标库 -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+                            400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+                            800: '#3730a3', 900: '#312e81', 950: '#1e1b4b'
+                        },
+                        secondary: {
+                            50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe',
+                            400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7c3aed',
+                            800: '#6b21b6', 900: '#581c87', 950: '#3b0764'
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(99, 102, 241, 0.3)' },
+                            '100%': { boxShadow: '0 0 30px rgba(99, 102, 241, 0.6)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义样式 -->
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark .glass {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(45deg, #6366f1, #a855f7); border-radius: 10px; }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 min-h-screen font-sans">
+    <!-- 背景装饰 -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary-400/20 to-secondary-400/20 rounded-full blur-3xl animate-float"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-primary-400/20 to-secondary-400/20 rounded-full blur-3xl animate-float" style="animation-delay: -3s;"></div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+            <div class="flex items-center space-x-3">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h1 class="text-xl font-bold text-gradient">CBIT AI Studio</h1>
+                            <span class="hidden md:inline-block px-2 py-0.5 bg-gradient-to-r from-blue-500 to-red-500 text-white text-xs rounded-full font-medium">
+                                百度深圳 × 广告投放部
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">智能创作平台 · 产学研合作项目</p>
+                    </div>
+            </div>
+            
+                <!-- 状态指示器 -->
+                <div class="flex items-center space-x-4">
+                    <div class="hidden sm:flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span class="text-sm text-gray-600 dark:text-gray-300" id="status-text" data-zh="就绪" data-en="Ready">就绪</span>
+                    </div>
+                    
+                    <!-- 语言切换 -->
+                    <button id="lang-toggle" class="flex items-center space-x-1 px-3 py-2 rounded-lg glass hover:bg-white/10 transition-colors">
+                        <i data-lucide="globe" class="w-4 h-4 text-gray-600 dark:text-gray-300"></i>
+                        <span class="text-sm text-gray-600 dark:text-gray-300" id="current-lang">中文</span>
+                </button>
+                    
+                    <!-- 主题切换 -->
+                    <button id="theme-toggle" class="p-2 rounded-lg glass hover:bg-white/10 transition-colors">
+                        <i data-lucide="sun" class="w-5 h-5 text-gray-600 dark:text-gray-300 dark:hidden"></i>
+                        <i data-lucide="moon" class="w-5 h-5 text-gray-300 hidden dark:block"></i>
+                </button>
+                </div>
+            </div>
+    </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- 左侧控制面板 -->
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- 功能模式切换 -->
+                <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                        <i data-lucide="layers" class="w-5 h-5 mr-2 text-primary-500"></i>
+                        <span data-zh="创作模式" data-en="Creation Mode">创作模式</span>
+                    </h2>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="mode-btn active flex flex-col items-center p-4 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg transition-all duration-300 hover:-translate-y-1" data-mode="txt2img">
+                            <i data-lucide="image" class="w-6 h-6 mb-2"></i>
+                            <span class="font-medium" data-zh="文本生图" data-en="Text to Image">文本生图</span>
+                            <span class="text-xs opacity-80" data-zh="AI绘画" data-en="AI Painting">AI绘画</span>
+                        </button>
+                        
+                        <button class="mode-btn flex flex-col items-center p-4 rounded-xl bg-white/50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/50 transition-all duration-300 hover:-translate-y-1 relative" data-mode="img2vid">
+                            <i data-lucide="video" class="w-6 h-6 mb-2"></i>
+                            <span class="font-medium" data-zh="视频生成" data-en="Video Generation">视频生成</span>
+                            <span class="text-xs opacity-60" data-zh="图转视频" data-en="Image to Video">图转视频</span>
+                            <!-- 研发中标签 -->
+                            <div class="absolute -top-2 -right-2 px-2 py-1 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs rounded-full font-medium shadow-lg">
+                                <span data-zh="研发中" data-en="In Dev">研发中</span>
+                            </div>
+                        </button>
+                    </div>
+      </div>
+
+                <!-- 文本生图面板 -->
+                <div id="txt2img-panel" class="mode-panel space-y-6">
+                    
+                    <!-- 快速创作区 -->
+                    <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <div class="space-y-4">
+                            <!-- 提示词输入 -->
+                            <div>
+                                <label class="block text-lg font-semibold text-gray-800 dark:text-white mb-3 flex items-center">
+                                    <i data-lucide="edit-3" class="w-5 h-5 mr-2 text-primary-500"></i>
+                                    <span data-zh="提示词" data-en="Prompt">提示词</span>
+                                </label>
+                                <div class="relative">
+                                    <textarea 
+                                        id="prompt" 
+                                        class="w-full h-24 p-4 bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-xl resize-none transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                                        placeholder="Enter English prompt, e.g.: realistic portrait of asian girl, natural lighting..."
+                                        data-zh-placeholder="输入中文提示词，例如：亚洲女孩写实肖像，自然光照..."
+                                        data-en-placeholder="Enter English prompt, e.g.: realistic portrait of asian girl, natural lighting..."
+                                    ></textarea>
+                                    <div class="absolute bottom-3 right-3 text-xs text-gray-400 dark:text-gray-500">
+                                        <span id="charCount">0</span>/1500
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 快速生成按钮 -->
+                            <button id="generate-btn" class="w-full bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 hover:-translate-y-1 flex items-center justify-center space-x-3 animate-glow text-lg">
+                                <i data-lucide="sparkles" class="w-6 h-6"></i>
+                                <span data-zh="立即生成" data-en="Generate Now">立即生成</span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 精选模板 -->
+                    <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                            <i data-lucide="bookmark" class="w-5 h-5 mr-2 text-primary-500"></i>
+                            <span data-zh="精选模板" data-en="Featured Templates">精选模板</span>
+                        </h3>
+                        
+                        <!-- 人像摄影 -->
+                        <div class="space-y-3">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                                <i data-lucide="camera" class="w-4 h-4 mr-2 text-blue-500"></i>
+                                人像摄影
+                            </h4>
+                            <div class="grid grid-cols-1 gap-2">
+                                <button class="preset-btn text-left p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-800/30 dark:hover:to-indigo-800/30 transition-all text-sm border border-blue-200/50 dark:border-blue-700/30 group" data-prompt="professional studio portrait of elegant asian woman, wearing sophisticated blazer, against clean white background, dramatic lighting with softbox, sharp focus on eyes, high-end fashion photography style, 85mm lens, shallow depth of field">
+                                    <div class="font-medium text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">时尚工作室肖像</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">专业棚拍，戏剧性光影</div>
+                                </button>
+                                
+                                <button class="preset-btn text-left p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-800/30 dark:hover:to-emerald-800/30 transition-all text-sm border border-green-200/50 dark:border-green-700/30 group" data-prompt="natural light portrait of asian man in urban setting, wearing casual denim jacket, golden hour lighting, modern city architecture background, candid expression, street photography aesthetic, 50mm lens, authentic lifestyle moment">
+                                    <div class="font-medium text-gray-800 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400">都市生活写真</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">自然光线，街头风格</div>
+                                </button>
+                                
+                                <button class="preset-btn text-left p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-800/30 dark:hover:to-pink-800/30 transition-all text-sm border border-purple-200/50 dark:border-purple-700/30 group" data-prompt="environmental portrait of young asian woman in traditional tea house, wearing modern hanbok, soft diffused lighting through paper windows, cultural heritage meets contemporary style, medium shot composition, film photography aesthetic">
+                                    <div class="font-medium text-gray-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">文化传承肖像</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">传统与现代融合</div>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 生活场景 -->
+                        <div class="space-y-3">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                                <i data-lucide="coffee" class="w-4 h-4 mr-2 text-amber-500"></i>
+                                生活场景
+                            </h4>
+                            <div class="grid grid-cols-1 gap-2">
+                                <button class="preset-btn text-left p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg hover:from-amber-100 hover:to-orange-100 dark:hover:from-amber-800/30 dark:hover:to-orange-800/30 transition-all text-sm border border-amber-200/50 dark:border-amber-700/30 group" data-prompt="cozy coffee shop scene, asian woman reading book by window, steaming latte on wooden table, afternoon sunlight streaming through blinds, warm ambient lighting, shallow depth of field, lifestyle photography, authentic candid moment">
+                                    <div class="font-medium text-gray-800 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">咖啡馆阅读</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">温馨午后时光</div>
+                                </button>
+                                
+                                <button class="preset-btn text-left p-3 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-lg hover:from-rose-100 hover:to-pink-100 dark:hover:from-rose-800/30 dark:hover:to-pink-800/30 transition-all text-sm border border-rose-200/50 dark:border-rose-700/30 group" data-prompt="cherry blossom park, couple walking hand in hand under pink petals, spring afternoon light, romantic atmosphere, other visitors blurred in background, natural lifestyle photography, soft focus on subjects">
+                                    <div class="font-medium text-gray-800 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400">樱花漫步</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">浪漫春日约会</div>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 艺术风格 -->
+                        <div class="space-y-3">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                                <i data-lucide="palette" class="w-4 h-4 mr-2 text-purple-500"></i>
+                                艺术风格
+                            </h4>
+                            <div class="grid grid-cols-1 gap-2">
+                                <button class="preset-btn text-left p-3 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-lg hover:from-cyan-100 hover:to-blue-100 dark:hover:from-cyan-800/30 dark:hover:to-blue-800/30 transition-all text-sm border border-cyan-200/50 dark:border-cyan-700/30 group" data-prompt="cyberpunk style portrait of asian woman with tech glasses, neon-lit urban night scene, holographic advertisements reflecting on wet streets, cool color palette, futuristic aesthetic, high contrast lighting, cinematic composition">
+                                    <div class="font-medium text-gray-800 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400">赛博朋克未来</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">科幻霓虹风格</div>
+                                </button>
+                                
+                                <button class="preset-btn text-left p-3 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-lg hover:from-violet-100 hover:to-purple-100 dark:hover:from-violet-800/30 dark:hover:to-purple-800/30 transition-all text-sm border border-violet-200/50 dark:border-violet-700/30 group" data-prompt="watercolor painting style, woman in white dress standing in lavender field, soft mountain backdrop, dreamy clouds, ethereal and romantic atmosphere, Studio Ghibli inspired aesthetic, pastel color palette, artistic illustration">
+                                    <div class="font-medium text-gray-800 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400">薰衣草梦境</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">水彩画风格</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 高级设置 -->
+                    <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer hover:text-primary-500 transition-colors">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
+                                    <i data-lucide="sliders" class="w-5 h-5 mr-2 text-primary-500"></i>
+                                    <span data-zh="高级设置" data-en="Advanced Settings">高级设置</span>
+                                </h3>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform"></i>
+                            </summary>
+                            
+                            <div class="mt-6 space-y-4">
+                                <!-- 反向提示词 -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                        <i data-lucide="x-circle" class="w-4 h-4 mr-2 text-red-500"></i>
+                                        反向提示词 <span class="text-xs text-gray-500 ml-1">(可选)</span>
+                                    </label>
+                                    <textarea 
+                                        id="negative" 
+                                        class="w-full h-16 p-3 bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-lg resize-none transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-sm"
+                                        placeholder="描述不想要的内容（可留空）"
+                                    ></textarea>
+                                </div>
+                                
+                                <!-- 图像尺寸 -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">图像尺寸</label>
+                                    <select id="size" class="w-full p-3 bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-lg transition-all text-gray-800 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
+                                        <option value="896x1392">896×1392 (竖图)</option>
+                                        <option value="1392x896">1392×896 (横图)</option>
+                                        <option value="1024x1024">1024×1024 (方图)</option>
+                                        <option value="768x1152">768×1152 (小竖图)</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- 采样步数 -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        采样步数: <span id="stepsValue" class="text-primary-500 font-mono">30</span>
+                                    </label>
+                                    <input type="range" min="10" max="50" value="30" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary-500" id="steps">
+                                </div>
+                                
+                                <!-- 引导度 -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        引导度: <span id="guidanceValue" class="text-primary-500 font-mono">3.0</span>
+                                    </label>
+                                    <input type="range" min="1" max="10" step="0.1" value="3.0" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary-500" id="guidance">
+                                </div>
+                                
+                                <!-- 随机种子 -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">随机种子</label>
+                                    <input type="number" id="seed" placeholder="留空自动生成" class="w-full p-3 bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-lg transition-all text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
+                                </div>
+                                
+                                <!-- 专业参数 -->
+                                <div class="pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                                        <i data-lucide="settings-2" class="w-4 h-4 mr-2"></i>
+                                        专业参数
+                                    </h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                噪声注入: <span id="noiseValue" class="text-primary-500 font-mono">0.85</span>
+                                            </label>
+                                            <input type="range" min="0" max="1" step="0.01" value="0.85" class="w-full accent-primary-500" id="noise-injection">
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                锐化强度: <span id="sharpenValue" class="text-primary-500 font-mono">0.69</span>
+                                            </label>
+                                            <input type="range" min="0" max="2" step="0.01" value="0.69" class="w-full accent-primary-500" id="sharpening-strength">
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                胶片颗粒: <span id="grainValue" class="text-primary-500 font-mono">0.05</span>
+                                            </label>
+                                            <input type="range" min="0" max="0.2" step="0.01" value="0.05" class="w-full accent-primary-500" id="film-grain-strength">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- 视频生成面板 -->
+                <div id="img2vid-panel" class="mode-panel hidden space-y-6">
+                    
+                    <!-- 图片上传 -->
+                    <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                            <i data-lucide="upload" class="w-5 h-5 mr-2 text-primary-500"></i>
+                            上传图片
+                            <span class="ml-2 px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs rounded-full">Pro</span>
+                        </h3>
+                        
+                        <div id="image-upload-area" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/50 dark:to-gray-700/50">
+                            <div id="upload-prompt" class="space-y-3">
+                                <div class="w-16 h-16 mx-auto bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/50 dark:to-secondary-900/50 rounded-2xl flex items-center justify-center">
+                                    <i data-lucide="image-plus" class="w-8 h-8 text-primary-500"></i>
+                                </div>
+                            <div>
+                                    <p class="text-gray-700 dark:text-gray-300 font-medium">点击或拖拽上传图片</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">支持 JPG、PNG 格式，建议分辨率不超过 2048x2048</p>
+                                    <p class="text-xs text-yellow-600 dark:text-yellow-400 mt-2 flex items-center justify-center">
+                                        <i data-lucide="zap" class="w-3 h-3 mr-1"></i>
+                                        CBIT Pro支持1080P高清视频生成
+                                    </p>
+                                </div>
+                                        <input type="file" id="image-input" accept="image/*" class="hidden">
+                                    </div>
+                            
+                            <div id="image-preview" class="hidden space-y-4">
+                                <img id="preview-img" src="" alt="预览图片" class="max-w-full max-h-64 mx-auto rounded-lg shadow-lg">
+                                <div class="space-y-2">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400" id="image-filename"></p>
+                                    <button id="remove-image" class="text-red-500 hover:text-red-600 text-sm flex items-center justify-center space-x-1 mx-auto transition-colors">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        <span>移除图片</span>
+                                        </button>
+                                </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 中文提示词 -->
+                    <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                            <i data-lucide="type" class="w-5 h-5 mr-2 text-primary-500"></i>
+                            中文提示词
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div class="relative">
+                                <textarea 
+                                    id="video-prompt" 
+                                    class="w-full h-32 p-4 bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-xl resize-none transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                                    placeholder="请输入中文描述，例如：千军万马、海浪拍打岸边、樱花飘落等..."
+                                ></textarea>
+                                <div class="absolute bottom-3 right-3 text-xs text-gray-400 dark:text-gray-500">
+                                    <span id="video-charCount">0</span>/400
+                                </div>
+                                </div>
+                                
+                            <!-- 热门视频效果 -->
+                            <div class="space-y-3">
+                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">热门视频效果</h4>
+                                    <div class="grid grid-cols-2 gap-2">
+                                    <button class="video-preset-btn text-left p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-800/30 dark:hover:to-indigo-800/30 transition-all text-sm border border-blue-200/50 dark:border-blue-700/30" data-prompt="千军万马奔腾在广阔的草原上，尘土飞扬，气势恢宏">
+                                        <div class="font-medium text-gray-800 dark:text-white">千军万马</div>
+                                    </button>
+                                    <button class="video-preset-btn text-left p-3 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-lg hover:from-cyan-100 hover:to-blue-100 dark:hover:from-cyan-800/30 dark:hover:to-blue-800/30 transition-all text-sm border border-cyan-200/50 dark:border-cyan-700/30" data-prompt="海浪拍打在礁石上，水花四溅，阳光照射下波光粼粼">
+                                        <div class="font-medium text-gray-800 dark:text-white">海浪拍岸</div>
+                                    </button>
+                                    <button class="video-preset-btn text-left p-3 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-lg hover:from-pink-100 hover:to-rose-100 dark:hover:from-pink-800/30 dark:hover:to-rose-800/30 transition-all text-sm border border-pink-200/50 dark:border-pink-700/30" data-prompt="樱花花瓣在春风中飘落，粉色花瓣满天飞舞，唯美浪漫">
+                                        <div class="font-medium text-gray-800 dark:text-white">樱花飘落</div>
+                                    </button>
+                                    <button class="video-preset-btn text-left p-3 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-lg hover:from-purple-100 hover:to-violet-100 dark:hover:from-purple-800/30 dark:hover:to-violet-800/30 transition-all text-sm border border-purple-200/50 dark:border-purple-700/30" data-prompt="城市夜景中霓虹灯闪烁，车流如河，灯火辉煌">
+                                        <div class="font-medium text-gray-800 dark:text-white">都市夜景</div>
+                                    </button>
+                                </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                    <!-- 视频参数 -->
+                    <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                            <i data-lucide="settings" class="w-5 h-5 mr-2 text-primary-500"></i>
+                            视频参数
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">视频时长</label>
+                                    <select id="video-duration" class="w-full p-3 bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-lg transition-all text-gray-800 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
+                                            <option value="121">5秒 (121帧)</option>
+                                            <option value="241">10秒 (241帧)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">宽高比</label>
+                                    <select id="video-aspect" class="w-full p-3 bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-lg transition-all text-gray-800 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
+                                            <option value="16:9">16:9 (横屏)</option>
+                                            <option value="9:16">9:16 (竖屏)</option>
+                                            <option value="1:1">1:1 (正方形)</option>
+                                            <option value="4:3">4:3 (标准)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">随机种子</label>
+                                <input type="number" id="video-seed" class="w-full p-3 bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-lg transition-all text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" placeholder="-1 (随机)" value="-1">
+                            </div>
+                                </div>
+                            </div>
+
+                    <!-- 视频生成按钮 -->
+                    <button id="generate-video-btn" class="w-full bg-gradient-to-r from-secondary-500 to-primary-500 hover:from-secondary-600 hover:to-primary-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 hover:-translate-y-1 flex items-center justify-center space-x-2">
+                        <i data-lucide="video" class="w-5 h-5"></i>
+                        <span>生成视频</span>
+                        <span class="px-2 py-1 bg-yellow-400 text-black text-xs rounded-full">Pro</span>
+                                </button>
+                            </div>
+                        </div>
+                
+            <!-- 右侧结果展示区 -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- 状态卡片 -->
+                <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                            <h2 class="text-lg font-semibold text-gray-800 dark:text-white">创作状态</h2>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span id="status" class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm font-medium">就绪</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 进度条 -->
+                <div id="progress-container" class="hidden glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
+                                <i data-lucide="loader" class="w-5 h-5 mr-2 animate-spin text-primary-500"></i>
+                                <span id="progress-text">生成中...</span>
+                            </h3>
+                            <span id="progress-percentage" class="text-sm font-medium text-primary-500">0%</span>
+                        </div>
+                        
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                            <div id="progress-bar" class="bg-gradient-to-r from-primary-500 to-secondary-500 h-3 rounded-full transition-all duration-500 ease-out relative" style="width: 0%">
+                                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+                        </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                            <span id="current-step">步骤: 0/30</span>
+                            <span id="estimated-time">预计: --:--</span>
+            </div>
+                    </div>
+                        </div>
+                        
+                <!-- 结果展示 -->
+                <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 min-h-[400px]">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                        <i data-lucide="image" class="w-5 h-5 mr-2 text-primary-500"></i>
+                        创作结果
+                    </h2>
+                    
+                    <div id="results">
+                        <!-- 占位符 -->
+                        <div class="placeholder flex flex-col items-center justify-center py-16 text-center space-y-4">
+                            <div class="w-24 h-24 bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/30 dark:to-secondary-900/30 rounded-3xl flex items-center justify-center animate-float">
+                                <i data-lucide="sparkles" class="w-12 h-12 text-primary-500"></i>
+          </div>
+                            <div class="space-y-2">
+                                <p class="text-lg font-medium text-gray-700 dark:text-gray-300">准备开始创作</p>
+                                <p class="text-gray-500 dark:text-gray-400 max-w-md">选择创作模式，输入提示词，点击生成按钮开始您的AI创作之旅</p>
+          </div>
+                            <div class="flex items-center space-x-6 text-sm text-gray-400 dark:text-gray-500">
+                                <div class="flex items-center space-x-2">
+                                    <i data-lucide="globe" class="w-4 h-4"></i>
+                                    <span>多语言支持</span>
+          </div>
+                                <div class="flex items-center space-x-2">
+                                    <i data-lucide="zap" class="w-4 h-4"></i>
+                                    <span>高级AI模型</span>
+        </div>
+                                <div class="flex items-center space-x-2">
+                                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                                    <span>专业后处理</span>
+                            </div>
+        </div>
+        </div>
+                    </div>
+                </div>
+                
+                <!-- API状态监控 -->
+                <div class="glass rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
+                            <i data-lucide="activity" class="w-5 h-5 mr-2 text-primary-500"></i>
+                            系统监控
+                        </h3>
+                        <button id="test-api-btn" class="px-4 py-2 bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 rounded-lg transition-all text-sm flex items-center space-x-2 hover:-translate-y-1">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            <span>刷新状态</span>
+                </button>
+            </div>
+            
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white/30 dark:bg-gray-800/30 rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold mb-1" id="health-status">
+                                <i data-lucide="loader" class="w-6 h-6 animate-spin text-gray-400 mx-auto"></i>
+                    </div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">服务状态</div>
+                </div>
+                
+                        <div class="bg-white/30 dark:bg-gray-800/30 rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold mb-1" id="lora-status">
+                                <i data-lucide="loader" class="w-6 h-6 animate-spin text-gray-400 mx-auto"></i>
+                        </div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">模型状态</div>
+                    </div>
+                        
+                        <div class="bg-white/30 dark:bg-gray-800/30 rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold mb-1" id="queue-status">
+                                <i data-lucide="loader" class="w-6 h-6 animate-spin text-gray-400 mx-auto"></i>
+                        </div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">队列状态</div>
+                        </div>
+                        </div>
+      </div>
+        </div>
+        </div>
+    </main>
+
+    <!-- 页面底部 -->
+    <footer class="mt-16 border-t border-white/20 dark:border-white/10 glass">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+                <!-- 左侧：项目信息 -->
+                <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+                            </div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">CBIT AI Studio</span>
+                    </div>
+                    
+                    <!-- 合作标识 -->
+                    <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                        <div class="flex items-center space-x-1">
+                            <div class="w-3 h-3 bg-gradient-to-r from-blue-500 to-red-500 rounded-full"></div>
+                            <span>百度深圳广告投放部合作项目</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <i data-lucide="building-2" class="w-3 h-3"></i>
+                            <span>CBIT @ CUHK(SZ)</span>
+                        </div>
+        </div>
+        </div>
+        
+                <!-- 右侧：开发者信息和GitHub链接 -->
+                <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-6">
+                    <!-- 开发者信息 -->
+                    <div class="text-center md:text-right">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            Developed by <span class="font-medium text-gray-800 dark:text-white">@reneverland</span>
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Full-stack Developer · AI Fine-tuning · Multimodal Systems
+                        </p>
+                    </div>
+                    
+                    <!-- GitHub徽章和链接 -->
+                    <div class="flex items-center space-x-3">
+                        <!-- GitHub个人资料链接 -->
+                        <a href="https://github.com/reneverland" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="flex items-center space-x-2 px-3 py-2 bg-gray-900 dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-gray-700 text-white rounded-lg transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl group">
+                            <i data-lucide="github" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-sm font-medium">GitHub</span>
+                            <i data-lucide="external-link" class="w-3 h-3 opacity-70"></i>
+                        </a>
+                        
+                        <!-- GitHub Stats徽章 -->
+                        <div class="flex flex-col space-y-1">
+                            <img src="https://img.shields.io/github/followers/reneverland?style=social" 
+                                 alt="GitHub followers" 
+                                 class="h-5 hover:scale-105 transition-transform">
+                            <img src="https://img.shields.io/github/stars/reneverland?style=social" 
+                                 alt="GitHub stars" 
+                                 class="h-5 hover:scale-105 transition-transform">
+                        </div>
+                    </div>
+                </div>
+      </div>
+
+            <!-- 底部版权信息 -->
+            <div class="mt-6 pt-6 border-t border-gray-200/50 dark:border-gray-700/50">
+                <div class="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0">
+                    <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                        <span>© 2025 CBIT AI Studio</span>
+                        <span>•</span>
+                        <span>产学研合作项目</span>
+                        <span>•</span>
+                        <span>Powered by AI</span>
+                    </div>
+                    
+                    <!-- 技术栈标识 -->
+                    <div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span>Built with</span>
+                        <div class="flex items-center space-x-1">
+                            <i data-lucide="code" class="w-3 h-3"></i>
+                            <span>Flask</span>
+                        </div>
+                        <span>•</span>
+                        <div class="flex items-center space-x-1">
+                            <i data-lucide="palette" class="w-3 h-3"></i>
+                            <span>Tailwind CSS</span>
+                        </div>
+                        <span>•</span>
+                        <div class="flex items-center space-x-1">
+                            <i data-lucide="zap" class="w-3 h-3"></i>
+                            <span>Lucide Icons</span>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 初始化图标
+        lucide.createIcons();
+        
+        // 全局变量
+        let currentMode = 'txt2img';
+        let currentPromptId = null;
+        let checkInterval = null;
+        let checkCount = 0;
+        let maxCheckCount = 300;
+        let progressSimulation = null;
+        let currentLang = 'zh'; // 默认中文
+
+        // 主题切换
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // 检查本地存储的主题
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            html.classList.toggle('dark', savedTheme === 'dark');
+        } else {
+            // 检查系统主题偏好
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            html.classList.toggle('dark', prefersDark);
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            lucide.createIcons(); // 重新创建图标
+        });
+
+        // 语言切换
+        const langToggle = document.getElementById('lang-toggle');
+        const currentLangSpan = document.getElementById('current-lang');
+        
+        // 检查本地存储的语言
+        const savedLang = localStorage.getItem('language');
+        if (savedLang) {
+            currentLang = savedLang;
+            switchLanguage(currentLang);
+        }
+        
+        langToggle.addEventListener('click', () => {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            switchLanguage(currentLang);
+            localStorage.setItem('language', currentLang);
+        });
+
+        // 切换语言函数
+        function switchLanguage(lang) {
+            currentLang = lang;
+            currentLangSpan.textContent = lang === 'zh' ? '中文' : 'English';
+            
+            // 更新所有带有语言标签的元素
+            document.querySelectorAll('[data-zh][data-en]').forEach(element => {
+                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                    element.placeholder = element.getAttribute(`data-${lang}-placeholder`) || element.getAttribute(`data-${lang}`) || element.textContent;
+                } else {
+                    element.textContent = element.getAttribute(`data-${lang}`) || element.textContent;
+                }
+            });
+            
+            // 更新提示词标题
+            const promptTitle = document.querySelector('#txt2img-panel h3');
+            if (promptTitle) {
+                promptTitle.innerHTML = `
+                    <i data-lucide="edit-3" class="w-5 h-5 mr-2 text-primary-500"></i>
+                    ${lang === 'zh' ? '提示词' : 'Prompt'}
+                `;
+                lucide.createIcons();
+            }
+        }
+
+            // 模式切换
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                const mode = this.dataset.mode;
+                switchMode(mode);
+            });
+        });
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                const isActive = btn.dataset.mode === mode;
+                if (isActive) {
+                    btn.classList.add('bg-gradient-to-br', 'from-primary-500', 'to-primary-600', 'text-white', 'shadow-lg');
+                    btn.classList.remove('bg-white/50', 'dark:bg-gray-800/50', 'text-gray-700', 'dark:text-gray-300', 'border', 'border-gray-200/50', 'dark:border-gray-700/50');
+                } else {
+                    btn.classList.remove('bg-gradient-to-br', 'from-primary-500', 'to-primary-600', 'text-white', 'shadow-lg');
+                    btn.classList.add('bg-white/50', 'dark:bg-gray-800/50', 'text-gray-700', 'dark:text-gray-300', 'border', 'border-gray-200/50', 'dark:border-gray-700/50');
+                }
+            });
+            
+            // 切换面板
+            document.querySelectorAll('.mode-panel').forEach(panel => {
+                panel.classList.toggle('hidden', !panel.id.includes(mode));
+            });
+        }
+
+        // 预设提示词点击事件
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                const prompt = this.dataset.prompt;
+                if (prompt) {
+                    document.getElementById('prompt').value = prompt;
+                    updateCharCount();
+                }
+            });
+        });
+
+        // 视频预设提示词点击事件
+        document.querySelectorAll('.video-preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const prompt = this.dataset.prompt;
+                if (prompt) {
+                    document.getElementById('video-prompt').value = prompt;
+                    updateVideoCharCount();
+                    }
+                });
+            });
+
+            // 字符计数
+        function updateCharCount() {
+            const textarea = document.getElementById('prompt');
+            const counter = document.getElementById('charCount');
+            const count = Math.min(textarea.value.length, 1500);
+            textarea.value = textarea.value.substring(0, 1500); // 限制输入长度
+            counter.textContent = count;
+            counter.classList.toggle('text-red-500', count >= 1500);
+        }
+
+        function updateVideoCharCount() {
+            const textarea = document.getElementById('video-prompt');
+            const counter = document.getElementById('video-charCount');
+            const count = textarea.value.length;
+            counter.textContent = count;
+            counter.classList.toggle('text-red-500', count >= 400);
+        }
+
+        // 范围输入更新
+        function initRangeInputs() {
+            const ranges = [
+                {id: 'steps', valueId: 'stepsValue'},
+                {id: 'guidance', valueId: 'guidanceValue'},
+                {id: 'noise-injection', valueId: 'noiseValue'},
+                {id: 'sharpening-strength', valueId: 'sharpenValue'},
+                {id: 'film-grain-strength', valueId: 'grainValue'}
+            ];
+            
+            ranges.forEach(range => {
+                const input = document.getElementById(range.id);
+                const valueSpan = document.getElementById(range.valueId);
+                if (input && valueSpan) {
+                    input.addEventListener('input', function() {
+                        valueSpan.textContent = this.value;
+                    });
+                }
+            });
+        }
+
+        // 图片上传处理
+        function initImageUpload() {
+            const uploadArea = document.getElementById('image-upload-area');
+            const fileInput = document.getElementById('image-input');
+            const uploadPrompt = document.getElementById('upload-prompt');
+            const imagePreview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            const filename = document.getElementById('image-filename');
+            const removeBtn = document.getElementById('remove-image');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('border-primary-400', 'dark:border-primary-500');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('border-primary-400', 'dark:border-primary-500');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('border-primary-400', 'dark:border-primary-500');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleImageUpload(files[0]);
+                }
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleImageUpload(e.target.files[0]);
+                }
+            });
+            
+            removeBtn.addEventListener('click', () => {
+                uploadPrompt.classList.remove('hidden');
+                imagePreview.classList.add('hidden');
+                fileInput.value = '';
+            });
+        }
+
+        function handleImageUpload(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-img').src = e.target.result;
+                    document.getElementById('image-filename').textContent = file.name;
+                    document.getElementById('upload-prompt').classList.add('hidden');
+                    document.getElementById('image-preview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('请上传图片文件！');
+            }
+        }
+
+        // 生成图像
+        async function generateImage() {
+            const generateBtn = document.getElementById('generate-btn');
+            const status = document.getElementById('status');
+            const progressContainer = document.getElementById('progress-container');
+            const results = document.getElementById('results');
+            
+            try {
+                // 清理之前的状态
+                if (checkInterval) {
+                    clearInterval(checkInterval);
+                    checkInterval = null;
+                }
+                if (progressSimulation) {
+                    clearInterval(progressSimulation);
+                    progressSimulation = null;
+                }
+                currentPromptId = null;
+                
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin mr-2"></i><span>创作中...</span>';
+                
+                status.textContent = '正在生成...';
+                status.className = 'px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-sm font-medium';
+                
+                // 显示进度条
+                progressContainer.classList.remove('hidden');
+                initProgressBar();
+                
+                const data = collectFormData();
+                
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                
+                currentPromptId = result.prompt_id;
+                status.textContent = `任务已提交 (${result.prompt_id.substring(0, 8)}...)`;
+                
+                // 开始检查结果
+                checkInterval = setInterval(checkResult, 1000);
+                
+            } catch (error) {
+                status.textContent = `错误: ${error.message}`;
+                status.className = 'px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-full text-sm font-medium';
+                progressContainer.classList.add('hidden');
+                generateBtn.disabled = false;
+                const btnText = currentLang === 'zh' ? '开始创作' : 'Start Creating';
+                generateBtn.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i><span>${btnText}</span>`;
+                showPlaceholder();
+            }
+        }
+
+        // 收集表单数据
+        function collectFormData() {
+            const size = document.getElementById('size').value.split('x');
+            return {
+                mode: 'txt2img',
+                width: parseInt(size[0]),
+                height: parseInt(size[1]),
+                steps: parseInt(document.getElementById('steps').value),
+                guidance: parseFloat(document.getElementById('guidance').value),
+                seed: document.getElementById('seed').value ? parseInt(document.getElementById('seed').value) : null,
+                noise_injection: parseFloat(document.getElementById('noise-injection').value),
+                sharpening_strength: parseFloat(document.getElementById('sharpening-strength').value),
+                film_grain_strength: parseFloat(document.getElementById('film-grain-strength').value),
+                prompt: document.getElementById('prompt').value,
+                negative_prompt: document.getElementById('negative').value
+            };
+        }
+
+        // 初始化进度条
+        function initProgressBar() {
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const progressText = document.getElementById('progress-text');
+            const currentStepEl = document.getElementById('current-step');
+            const estimatedTimeEl = document.getElementById('estimated-time');
+            
+            progressBar.style.width = '0%';
+            progressPercentage.textContent = '0%';
+            progressText.textContent = '正在初始化...';
+            currentStepEl.textContent = `步骤: 0/${document.getElementById('steps').value}`;
+            estimatedTimeEl.textContent = '预计: 计算中...';
+            
+            setTimeout(() => {
+                updateProgress(5, '正在加载模型...', 0, parseInt(document.getElementById('steps').value));
+            }, 500);
+        }
+
+        // 更新进度条
+        function updateProgress(percentage, text, currentStep, totalSteps, estimatedTime = null) {
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-percentage').textContent = `${Math.round(percentage)}%`;
+            document.getElementById('progress-text').textContent = text;
+            document.getElementById('current-step').textContent = `步骤: ${currentStep}/${totalSteps}`;
+            
+            if (estimatedTime) {
+                document.getElementById('estimated-time').textContent = `预计: ${estimatedTime}`;
+            }
+        }
+
+        // 检查结果
+        async function checkResult() {
+            if (!currentPromptId) return;
+            
+            checkCount++;
+            if (checkCount > maxCheckCount) {
+                console.error('检查超时，停止检查');
+                document.getElementById('status').textContent = '生成超时，请重试';
+                document.getElementById('status').className = 'px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-sm font-medium';
+                stopChecking();
+                showPlaceholder();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/result?prompt_id=${currentPromptId}`);
+                
+                if (!response.ok) {
+                    console.error(`HTTP错误: ${response.status}`);
+                    return;
+                }
+                
+                const responseText = await response.text();
+                if (!responseText || responseText.trim() === '') {
+                    console.log('收到空响应，继续等待...');
+                    return;
+                }
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('JSON解析失败:', jsonError);
+                    return;
+                }
+                
+                if (result.status === 'success' && result.images) {
+                    updateProgress(100, '生成完成！', parseInt(document.getElementById('steps').value), parseInt(document.getElementById('steps').value), '00:00');
+                    setTimeout(() => {
+                        displayResults(result.images);
+                        stopChecking();
+                    }, 1000);
+                } else if (result.status === 'error') {
+                    document.getElementById('status').textContent = `错误: ${result.message}`;
+                    document.getElementById('status').className = 'px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-full text-sm font-medium';
+                    stopChecking();
+                    showPlaceholder();
+                } else if (result.status === 'pending' || result.status === 'running') {
+                    if (!progressSimulation) {
+                        const totalSteps = parseInt(document.getElementById('steps').value) || 30;
+                        setTimeout(() => simulateProgress(totalSteps), 2000);
+                    }
+                }
+            } catch (error) {
+                console.error('检查结果失败:', error);
+            }
+        }
+
+        // 模拟进度更新
+        function simulateProgress(totalSteps) {
+            let currentStep = 0;
+            let percentage = 10;
+            const stepIncrement = 80 / totalSteps;
+            
+            progressSimulation = setInterval(() => {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    percentage += stepIncrement;
+                    
+                    let text = '正在生成图像...';
+                    if (currentStep <= 5) {
+                        text = '正在编码提示词...';
+                    } else if (currentStep <= totalSteps * 0.3) {
+                        text = '正在初始采样...';
+                    } else if (currentStep <= totalSteps * 0.7) {
+                        text = '正在细化图像...';
+                    } else if (currentStep <= totalSteps * 0.9) {
+                        text = '正在优化细节...';
+                    } else {
+                        text = '正在后处理...';
+                    }
+                    
+                    const remainingTime = Math.max(0, (totalSteps - currentStep) * 2);
+                    const minutes = Math.floor(remainingTime / 60);
+                    const seconds = remainingTime % 60;
+                    const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    updateProgress(percentage, text, currentStep, totalSteps, timeStr);
+                } else {
+                    clearInterval(progressSimulation);
+                    updateProgress(90, '正在保存图像...', totalSteps, totalSteps, '00:05');
+                }
+            }, 1500);
+        }
+
+        // 显示结果
+        function displayResults(images) {
+            const results = document.getElementById('results');
+            const progressContainer = document.getElementById('progress-container');
+            
+            results.innerHTML = '';
+            progressContainer.classList.add('hidden');
+            
+            images.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = 'result-item mb-6 animate-fade-in';
+                div.innerHTML = `
+                    <div class="relative rounded-2xl overflow-hidden bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 shadow-lg group">
+                        <img src="${img.url}" alt="生成的图像 ${index + 1}" class="w-full h-auto" />
+                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-4">
+                            <button class="bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-white p-3 rounded-xl hover:bg-white dark:hover:bg-gray-700 transition-all shadow-lg hover:-translate-y-1" onclick="downloadImage('${img.url}', '${img.filename}')" title="下载图片">
+                                <i data-lucide="download" class="w-5 h-5"></i>
+                            </button>
+                            <button class="bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-white p-3 rounded-xl hover:bg-white dark:hover:bg-gray-700 transition-all shadow-lg hover:-translate-y-1" onclick="regenerateImage()" title="重新生成">
+                                <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                            </button>
+                            <button class="bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-white p-3 rounded-xl hover:bg-white dark:hover:bg-gray-700 transition-all shadow-lg hover:-translate-y-1" onclick="openVideoModal('${img.url}')" title="生成视频">
+                                <i data-lucide="video" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-sm text-gray-500 dark:text-gray-400 text-center">${img.filename}</div>
+                `;
+                results.appendChild(div);
+            });
+            
+            // 重新创建图标
+            lucide.createIcons();
+            
+            document.getElementById('status').textContent = '生成完成';
+            document.getElementById('status').className = 'px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm font-medium';
+        }
+
+        // 显示占位符
+        function showPlaceholder() {
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <div class="placeholder flex flex-col items-center justify-center py-16 text-center space-y-4">
+                    <div class="w-24 h-24 bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/30 dark:to-secondary-900/30 rounded-3xl flex items-center justify-center animate-float">
+                        <i data-lucide="sparkles" class="w-12 h-12 text-primary-500"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-lg font-medium text-gray-700 dark:text-gray-300">准备开始创作</p>
+                        <p class="text-gray-500 dark:text-gray-400 max-w-md">选择创作模式，输入提示词，点击生成按钮开始您的AI创作之旅</p>
+                    </div>
+                    <div class="flex items-center space-x-6 text-sm text-gray-400 dark:text-gray-500">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="globe" class="w-4 h-4"></i>
+                            <span>多语言支持</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="zap" class="w-4 h-4"></i>
+                            <span>高级AI模型</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                            <span>专业后处理</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // 停止检查
+        function stopChecking() {
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+            }
+            if (progressSimulation) {
+                clearInterval(progressSimulation);
+                progressSimulation = null;
+            }
+            document.getElementById('progress-container').classList.add('hidden');
+            document.getElementById('generate-btn').disabled = false;
+            document.getElementById('generate-btn').innerHTML = '<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i><span>开始创作</span>';
+            
+            currentPromptId = null;
+            checkCount = 0;
+            lucide.createIcons();
+        }
+
+        // 下载图像
+        function downloadImage(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 重新生成
+        function regenerateImage() {
+            generateImage();
+        }
+
+        // API测试
+        async function testAPIs() {
+            // 健康检查
+            try {
+                const response = await fetch('/health');
+                const healthIcon = document.getElementById('health-status');
+                if (response.ok) {
+                    healthIcon.innerHTML = '<i data-lucide="check-circle" class="w-6 h-6 text-green-500 mx-auto"></i>';
+                    healthIcon.className = 'text-2xl font-bold mb-1 text-green-600';
+                } else {
+                    healthIcon.innerHTML = '<i data-lucide="x-circle" class="w-6 h-6 text-red-500 mx-auto"></i>';
+                    healthIcon.className = 'text-2xl font-bold mb-1 text-red-600';
+                }
+            } catch (error) {
+                const healthIcon = document.getElementById('health-status');
+                healthIcon.innerHTML = '<i data-lucide="x-circle" class="w-6 h-6 text-red-500 mx-auto"></i>';
+                healthIcon.className = 'text-2xl font-bold mb-1 text-red-600';
+            }
+
+            // 模型状态（简化显示）
+            const loraIcon = document.getElementById('lora-status');
+            loraIcon.innerHTML = '<i data-lucide="check-circle" class="w-6 h-6 text-blue-500 mx-auto"></i>';
+            loraIcon.className = 'text-2xl font-bold mb-1 text-blue-600';
+
+            // 队列状态（简化显示）
+            const queueIcon = document.getElementById('queue-status');
+            queueIcon.innerHTML = '<span class="text-purple-600">0</span>';
+            queueIcon.className = 'text-2xl font-bold mb-1 text-purple-600';
+            
+            lucide.createIcons();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定事件
+            document.getElementById('prompt').addEventListener('input', updateCharCount);
+            document.getElementById('video-prompt').addEventListener('input', updateVideoCharCount);
+            document.getElementById('generate-btn').addEventListener('click', generateImage);
+            document.getElementById('test-api-btn').addEventListener('click', testAPIs);
+            
+            // 初始化功能
+            initRangeInputs();
+            initImageUpload();
+            testAPIs();
+            
+            // 重新创建图标
+            lucide.createIcons();
+        });
+   </script>
+</body>
+</html> 

@@ -1,0 +1,1885 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>baiducbit AI Studio - FLUX翻译工作流</title>
+    
+    <!-- 外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- Tailwind配置 - 调整为浅色主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#7c3aed',
+                        light: '#f8fafc',
+                        dark: '#e2e8f0',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 - 适配浅色主题 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .glass-effect { @apply bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm; }
+            .card-hover { @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1; }
+            .btn-primary { @apply bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200; }
+            .btn-secondary { @apply bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-all duration-200; }
+            .tab-active { @apply bg-primary text-white; }
+            .tab-inactive { @apply bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors; }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800 min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <header class="glass-effect sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                    Baidu&CBIT AI Studio - Flux拟真生成平台
+                </h1>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button class="btn-secondary text-sm hidden sm:block" id="queue-btn">
+                    <i class="fa fa-list mr-1"></i> 队列状态
+                </button>
+                <button class="btn-secondary text-sm hidden sm:block" id="interrupt-btn" disabled>
+                    <i class="fa fa-stop mr-1"></i> 中断生成
+                </button>
+                <div class="w-9 h-9 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
+                    <i class="fa fa-user text-white"></i>
+                </div>
+            </div>
+    </div>
+  </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左侧：控制面板 -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- 功能标签页切换 -->
+                <div class="glass-effect rounded-xl overflow-hidden">
+                    <div class="flex border-b border-gray-200">
+                        <button class="mode-btn tab-active flex-1 py-3 px-4 font-medium transition-all" data-mode="txt2img">
+                            <i class="fa fa-file-text-o mr-2"></i>文本生图
+                        </button>
+                        <button class="mode-btn tab-inactive flex-1 py-3 px-4 font-medium transition-all" data-mode="img2vid">
+                            <i class="fa fa-video-camera mr-2"></i>视频生成
+                        </button>
+      </div>
+
+
+                    
+                    <!-- 文本生图内容区 -->
+                    <div class="mode-content p-5" id="txt2img-content">
+                        <div class="space-y-6">
+                            <div>
+                                <h2 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fa fa-comment-o text-primary mr-2"></i> 英文提示词
+                                </h2>
+                                <textarea id="prompt" class="w-full bg-white border border-gray-300 rounded-lg p-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-sm" placeholder="Enter English prompt, e.g.: realistic portrait of asian girl, natural lighting..."></textarea>
+                                
+                                <div class="mt-3 text-sm text-gray-500 flex justify-between">
+                                    <span>英文提示词效果更佳</span>
+                                    <span id="charCount">0/500</span>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <h3 class="text-sm font-medium text-gray-700 mb-2">Professional Prompts</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <!-- Portrait Photography -->
+                                        <div class="space-y-1">
+                                            <h4 class="text-xs font-medium text-gray-600">Portrait Photography</h4>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded transition-colors text-left" data-prompt="professional studio portrait of elegant asian woman, wearing sophisticated blazer, against clean white background, dramatic lighting with softbox, sharp focus on eyes, high-end fashion photography style, 85mm lens, shallow depth of field">Studio Fashion Portrait</button>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded transition-colors text-left" data-prompt="natural light portrait of asian man in urban setting, wearing casual denim jacket, golden hour lighting, modern city architecture background, candid expression, street photography aesthetic, 50mm lens, authentic lifestyle moment">Urban Lifestyle Portrait</button>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded transition-colors text-left" data-prompt="environmental portrait of young asian woman in traditional tea house, wearing modern hanbok, soft diffused lighting through paper windows, cultural heritage meets contemporary style, medium shot composition, film photography aesthetic">Cultural Heritage Portrait</button>
+                                        </div>
+                                        
+                                        <!-- Lifestyle Scenes -->
+                                        <div class="space-y-1">
+                                            <h4 class="text-xs font-medium text-gray-600">Lifestyle Scenes</h4>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-green-50 hover:bg-green-100 rounded transition-colors text-left" data-prompt="cozy coffee shop scene, asian woman reading book by window, steaming latte on wooden table, afternoon sunlight streaming through blinds, warm ambient lighting, shallow depth of field, lifestyle photography, authentic candid moment">Coffee Shop Reading</button>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-green-50 hover:bg-green-100 rounded transition-colors text-left" data-prompt="home kitchen scene, young mother and child baking together, flour dusted on marble counter, warm pendant lighting, natural family interaction, documentary style photography, 35mm lens, genuine emotions captured">Family Baking Moment</button>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-green-50 hover:bg-green-100 rounded transition-colors text-left" data-prompt="cherry blossom park, couple walking hand in hand under pink petals, spring afternoon light, romantic atmosphere, other visitors blurred in background, natural lifestyle photography, soft focus on subjects">Spring Romance Walk</button>
+                                        </div>
+                                        
+                                        <!-- Artistic Styles -->
+                                        <div class="space-y-1">
+                                            <h4 class="text-xs font-medium text-gray-600">Artistic Styles</h4>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-purple-50 hover:bg-purple-100 rounded transition-colors text-left" data-prompt="cyberpunk style portrait of asian woman with tech glasses, neon-lit urban night scene, holographic advertisements reflecting on wet streets, cool color palette, futuristic aesthetic, high contrast lighting, cinematic composition">Cyberpunk Future</button>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-purple-50 hover:bg-purple-100 rounded transition-colors text-left" data-prompt="watercolor painting style, woman in white dress standing in lavender field, soft mountain backdrop, dreamy clouds, ethereal and romantic atmosphere, Studio Ghibli inspired aesthetic, pastel color palette, artistic illustration">Lavender Field Dream</button>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-purple-50 hover:bg-purple-100 rounded transition-colors text-left" data-prompt="vintage film photography style, 1990s Hong Kong cha chaan teng, young man in checkered shirt sitting in red booth, classic milk tea and pineapple bun on table, warm tungsten lighting, nostalgic grain texture">Hong Kong Nostalgia</button>
+                                        </div>
+                                        
+                                        <!-- Professional Photography -->
+                                        <div class="space-y-1">
+                                            <h4 class="text-xs font-medium text-gray-600">Professional Photography</h4>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-orange-50 hover:bg-orange-100 rounded transition-colors text-left" data-prompt="high-end fashion magazine cover style, model in designer suit, minimalist white studio background, professional lighting setup, sharp facial features, confident gaze, commercial photography quality, medium format camera aesthetic">Magazine Cover Style</button>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-orange-50 hover:bg-orange-100 rounded transition-colors text-left" data-prompt="golden hour beach portrait, model sitting on driftwood, ocean waves in background, hair flowing in sea breeze, sunset lighting creating rim light, natural beauty concept, environmental portrait, 85mm telephoto lens">Golden Hour Beach</button>
+                                            <button class="preset-btn w-full text-xs px-2 py-1 bg-orange-50 hover:bg-orange-100 rounded transition-colors text-left" data-prompt="black and white street photography, woman with transparent umbrella walking in rain, city reflections on wet pavement, dramatic contrast, film noir aesthetic, high contrast lighting, artistic composition, 35mm street photography">Rainy Night Poetry</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h2 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fa fa-ban text-primary mr-2"></i> 反向提示词
+                                </h2>
+                                <textarea id="negative" class="w-full bg-white border border-gray-300 rounded-lg p-3 h-20 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-sm" placeholder="描述不想要的内容（可留空）"></textarea>
+                            </div>
+                        </div>
+            </div>
+          </div>
+
+                    <!-- 视频生成内容区 -->
+                    <div class="mode-content p-5 hidden" id="img2vid-content">
+                        <div class="space-y-6">
+                            <!-- 图片上传区域 -->
+                            <div>
+                                <h2 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fa fa-image text-primary mr-2"></i> 上传图片
+                                    <span class="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded ml-2">CBIT Pro</span>
+                                </h2>
+                                <div id="image-upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
+                                    <div id="upload-prompt">
+                                        <i class="fa fa-cloud-upload text-4xl text-gray-400 mb-4"></i>
+                                        <p class="text-gray-600 mb-2">点击或拖拽上传图片</p>
+                                        <p class="text-sm text-gray-400">支持 JPG、PNG 格式，建议分辨率不超过 2048x2048</p>
+                                        <p class="text-xs text-yellow-600 mt-1">🎬 CBIT Pro支持1080P高清视频生成，多镜头叙事能力</p>
+                                        <input type="file" id="image-input" accept="image/*" class="hidden">
+                                    </div>
+                                    <div id="image-preview" class="hidden">
+                                        <img id="preview-img" src="" alt="预览图片" class="max-w-full max-h-64 mx-auto rounded-lg">
+                                        <p class="mt-2 text-sm text-gray-600" id="image-filename"></p>
+                                        <button id="remove-image" class="mt-2 text-red-500 hover:text-red-700 text-sm">
+                                            <i class="fa fa-trash mr-1"></i>移除图片
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 中文提示词 -->
+                            <div>
+                                <h2 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fa fa-comment-o text-primary mr-2"></i> 中文提示词
+                                </h2>
+                                <textarea id="video-prompt" class="w-full bg-white border border-gray-300 rounded-lg p-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-sm" placeholder="请输入中文描述，例如：千军万马、海浪拍打岸边、樱花飘落等..."></textarea>
+                                
+                                <div class="mt-3 text-sm text-gray-500 flex justify-between">
+                                    <span>仅支持中文，建议400字以内</span>
+                                    <span id="video-charCount">0/400</span>
+                                </div>
+                                
+                                <!-- 预设提示词 -->
+                                <div class="mt-3">
+                                    <h3 class="text-sm font-medium text-gray-700 mb-2">热门视频效果</h3>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button class="video-preset-btn text-xs px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors text-left" data-prompt="千军万马奔腾在广阔的草原上，尘土飞扬，气势恢宏">千军万马</button>
+                                        <button class="video-preset-btn text-xs px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors text-left" data-prompt="海浪拍打在礁石上，水花四溅，阳光照射下波光粼粼">海浪拍岸</button>
+                                        <button class="video-preset-btn text-xs px-3 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors text-left" data-prompt="樱花花瓣在春风中飘落，粉色花瓣满天飞舞，唯美浪漫">樱花飘落</button>
+                                        <button class="video-preset-btn text-xs px-3 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors text-left" data-prompt="城市夜景中霓虹灯闪烁，车流如河，灯火辉煌">都市夜景</button>
+                                        <button class="video-preset-btn text-xs px-3 py-2 bg-purple-50 hover:bg-purple-100 rounded transition-colors text-left" data-prompt="森林中阳光透过树叶洒下斑驳光影，微风轻拂树叶">森林光影</button>
+                                        <button class="video-preset-btn text-xs px-3 py-2 bg-purple-50 hover:bg-purple-100 rounded transition-colors text-left" data-prompt="雪花纷飞的冬日，雪花在空中翩翩起舞，银装素裹">雪花飞舞</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 视频参数设置 -->
+                            <div>
+                                <h2 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fa fa-cog text-primary mr-2"></i> 视频参数
+                                </h2>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <!-- 视频时长 -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">视频时长</label>
+                                        <select id="video-duration" class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                            <option value="121">5秒 (121帧)</option>
+                                            <option value="241">10秒 (241帧)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- 宽高比 -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">宽高比</label>
+                                        <select id="video-aspect" class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                            <option value="16:9">16:9 (横屏)</option>
+                                            <option value="9:16">9:16 (竖屏)</option>
+                                            <option value="1:1">1:1 (正方形)</option>
+                                            <option value="4:3">4:3 (标准)</option>
+                                            <option value="3:4">3:4 (竖版标准)</option>
+                                            <option value="21:9">21:9 (超宽屏)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- 随机种子 -->
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">随机种子 (可选)</label>
+                                    <input type="number" id="video-seed" class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="-1 (随机)" value="-1">
+                                    <p class="text-xs text-gray-500 mt-1">相同种子和参数会生成相似的视频效果</p>
+                                </div>
+                            </div>
+
+                            <!-- 生成按钮 -->
+                            <div>
+                                <button id="generate-video-btn" class="w-full btn-primary py-3 text-lg font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <i class="fa fa-video-camera mr-2"></i>生成视频 <span class="text-xs bg-yellow-500 text-black px-2 py-1 rounded ml-2">Pro</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 参数设置 -->
+                <div class="glass-effect rounded-xl p-5 card-hover">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-sliders text-primary mr-2"></i> 参数设置
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">图像尺寸</label>
+                            <select id="size" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm">
+                                <option value="896x1392">896×1392 (竖图)</option>
+                                <option value="1392x896">1392×896 (横图)</option>
+                                <option value="1024x1024">1024×1024 (方图)</option>
+                                <option value="768x1152">768×1152 (小竖图)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">采样步数: <span id="stepsValue">30</span></label>
+                            <input type="range" min="10" max="50" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" id="steps">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">引导度: <span id="guidanceValue">3.0</span></label>
+                            <input type="range" min="1" max="10" step="0.1" value="3.0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" id="guidance">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">随机种子</label>
+                            <input type="number" id="seed" placeholder="留空自动生成" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm">
+                        </div>
+                        
+                        <!-- 高级设置折叠面板 -->
+                        <details class="border border-gray-200 rounded-lg">
+                            <summary class="p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors rounded-lg">
+                                <i class="fa fa-cog mr-2"></i>高级设置
+                            </summary>
+                            <div class="p-3 space-y-3">
+          <div>
+                                    <label class="block text-sm text-gray-600 mb-1">噪声注入: <span id="noiseValue">0.85</span></label>
+                                    <input type="range" min="0" max="1" step="0.01" value="0.85" class="w-full accent-primary" id="noise-injection">
+          </div>
+          <div>
+                                    <label class="block text-sm text-gray-600 mb-1">锐化强度: <span id="sharpenValue">0.69</span></label>
+                                    <input type="range" min="0" max="2" step="0.01" value="0.69" class="w-full accent-primary" id="sharpening-strength">
+          </div>
+          <div>
+                                    <label class="block text-sm text-gray-600 mb-1">胶片颗粒: <span id="grainValue">0.05</span></label>
+                                    <input type="range" min="0" max="0.2" step="0.01" value="0.05" class="w-full accent-primary" id="film-grain-strength">
+          </div>
+        </div>
+      </details>
+                    </div>
+                </div>
+                
+                <!-- 生成按钮 -->
+                <button id="generate-btn" class="w-full btn-primary text-lg py-3 flex items-center justify-center">
+                    <i class="fa fa-magic mr-2"></i> 生成图像
+                </button>
+            </div>
+            
+            <!-- 右侧：结果展示区 -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- 状态显示 -->
+                <div class="glass-effect rounded-xl p-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold flex items-center">
+                            <i class="fa fa-info-circle text-primary mr-2"></i> 状态
+                        </h2>
+                        <div class="status px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm" id="status">就绪</div>
+                    </div>
+                </div>
+                
+                <!-- 生成结果 -->
+                <div class="glass-effect rounded-xl p-5 card-hover">
+                    <h2 class="text-lg font-semibold mb-3 flex items-center">
+                        <i class="fa fa-image text-primary mr-2"></i> 生成结果
+                    </h2>
+                    
+                    <!-- 进度条容器 -->
+                    <div id="progress-container" class="hidden mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700" id="progress-text">生成中...</span>
+                            <span class="text-sm text-gray-500" id="progress-percentage">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progress-bar" class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                            <span id="current-step">步骤: 0/30</span>
+                            <span id="estimated-time">预计: --:--</span>
+                        </div>
+      </div>
+
+                    <div id="results">
+                        <div class="placeholder flex flex-col items-center justify-center py-16 text-center">
+                            <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                <i class="fa fa-paint-brush text-3xl text-gray-400"></i>
+                            </div>
+                            <p class="text-gray-500 max-w-md">选择功能类型，设置参数后点击"生成图像"按钮开始创作</p>
+                            <p class="text-sm text-gray-400 mt-2">支持中文、日文、韩文等多语言输入</p>
+                            <p class="text-sm text-gray-400">集成高级Flux模型和后处理功能</p>
+        </div>
+        </div>
+        
+        
+      </div>
+
+                <!-- API测试区 -->
+                <div class="glass-effect rounded-xl p-5 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold flex items-center">
+                            <i class="fa fa-flask text-primary mr-2"></i> API测试
+                        </h2>
+                        <button id="test-api-btn" class="btn-secondary text-sm">
+                            <i class="fa fa-play mr-1"></i>测试API
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-green-600" id="health-status">-</div>
+                            <div class="text-sm text-gray-600">健康检查</div>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-blue-600" id="lora-status">-</div>
+                            <div class="text-sm text-gray-600">LoRA预设</div>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-purple-600" id="queue-status">-</div>
+                            <div class="text-sm text-gray-600">队列状态</div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+    </main>
+
+    <script>
+        let currentMode = 'txt2img';
+        let currentPromptId = null;
+        let checkInterval = null;
+        let checkCount = 0;
+        let maxCheckCount = 300; // 最多检查5分钟 (300 * 1秒)
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initEventListeners();
+            initRangeInputs();
+            testAPIs();
+        });
+
+        // 初始化事件监听器
+        function initEventListeners() {
+            // 模式切换
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.mode-btn').forEach(b => {
+                        b.classList.remove('tab-active');
+                        b.classList.add('tab-inactive');
+                    });
+                    document.querySelectorAll('.mode-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    
+                    this.classList.remove('tab-inactive');
+                    this.classList.add('tab-active');
+                    currentMode = this.dataset.mode;
+                    
+                    document.getElementById(`${currentMode}-content`).classList.remove('hidden');
+                });
+            });
+
+            // 预设按钮
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (this.dataset.text) {
+                        document.getElementById('original-text').value = this.dataset.text;
+                    }
+                    if (this.dataset.prompt) {
+                        document.getElementById('prompt').value = this.dataset.prompt;
+                    }
+                });
+            });
+
+            // 字符计数
+            const promptTextarea = document.getElementById('prompt');
+            const charCount = document.getElementById('charCount');
+            if (promptTextarea && charCount) {
+                promptTextarea.addEventListener('input', function() {
+                    const count = Math.min(this.value.length, 500);
+                    this.value = this.value.substring(0, 500);
+                    charCount.textContent = `${count}/500`;
+                    charCount.classList.toggle('text-red-400', count === 500);
+                });
+            }
+
+            // 生成按钮
+            document.getElementById('generate-btn').addEventListener('click', generateImage);
+            
+            // 中断按钮
+            document.getElementById('interrupt-btn').addEventListener('click', interruptGeneration);
+            
+            // 队列按钮
+            document.getElementById('queue-btn').addEventListener('click', checkQueue);
+            
+            // API测试按钮
+            document.getElementById('test-api-btn').addEventListener('click', testAPIs);
+        }
+
+        // 初始化范围输入
+        function initRangeInputs() {
+            const ranges = [
+                {id: 'steps', valueId: 'stepsValue'},
+                {id: 'guidance', valueId: 'guidanceValue'},
+                {id: 'noise-injection', valueId: 'noiseValue'},
+                {id: 'sharpening-strength', valueId: 'sharpenValue'},
+                {id: 'film-grain-strength', valueId: 'grainValue'}
+            ];
+            
+            ranges.forEach(range => {
+                const input = document.getElementById(range.id);
+                const valueSpan = document.getElementById(range.valueId);
+                if (input && valueSpan) {
+                    input.addEventListener('input', function() {
+                        valueSpan.textContent = this.value;
+                    });
+                }
+            });
+        }
+
+        // 生成图像
+        async function generateImage() {
+            const generateBtn = document.getElementById('generate-btn');
+            const interruptBtn = document.getElementById('interrupt-btn');
+            const status = document.getElementById('status');
+            const progressContainer = document.getElementById('progress-container');
+            const results = document.getElementById('results');
+            
+            try {
+                // 清理之前的状态
+                if (checkInterval) {
+                    clearInterval(checkInterval);
+                    checkInterval = null;
+                }
+                if (progressSimulation) {
+                    clearInterval(progressSimulation);
+                    progressSimulation = null;
+                }
+                currentPromptId = null;
+                
+                generateBtn.disabled = true;
+                interruptBtn.disabled = false;
+                status.textContent = '正在生成...';
+                status.className = 'status px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm';
+                
+                // 完全重置UI状态
+                results.innerHTML = '';
+                progressContainer.classList.remove('hidden');
+                
+                // 强制重置进度条 - 防止残留显示
+                document.getElementById('progress-bar').style.width = '0%';
+                document.getElementById('progress-percentage').textContent = '0%';
+                document.getElementById('progress-text').textContent = '准备中...';
+                
+                // 初始化进度条
+                initProgressBar();
+                
+                const data = collectFormData();
+                
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                
+                currentPromptId = result.prompt_id;
+                status.textContent = `任务已提交 (${result.prompt_id.substring(0, 8)}...)`;
+                
+                // 开始检查结果和更新进度
+                checkInterval = setInterval(checkResult, 1000);
+                
+            } catch (error) {
+                status.textContent = `错误: ${error.message}`;
+                status.className = 'status px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm';
+                progressContainer.classList.add('hidden');
+                generateBtn.disabled = false;
+                interruptBtn.disabled = true;
+                currentPromptId = null;
+                showPlaceholder();
+            }
+        }
+
+        // 收集表单数据
+        function collectFormData() {
+            const size = document.getElementById('size').value.split('x');
+            const data = {
+                mode: 'txt2img',
+                width: parseInt(size[0]),
+                height: parseInt(size[1]),
+                steps: parseInt(document.getElementById('steps').value),
+                guidance: parseFloat(document.getElementById('guidance').value),
+                seed: document.getElementById('seed').value ? parseInt(document.getElementById('seed').value) : null,
+                noise_injection: parseFloat(document.getElementById('noise-injection').value),
+                sharpening_strength: parseFloat(document.getElementById('sharpening-strength').value),
+                film_grain_strength: parseFloat(document.getElementById('film-grain-strength').value),
+                prompt: document.getElementById('prompt').value,
+                negative_prompt: document.getElementById('negative').value
+            };
+
+            return data;
+        }
+
+        // 检查结果
+        async function checkResult() {
+            if (!currentPromptId) return;
+            
+            // 检查超时
+            checkCount++;
+            if (checkCount > maxCheckCount) {
+                console.error('检查超时，停止检查');
+                document.getElementById('status').textContent = '生成超时，请重试';
+                document.getElementById('status').className = 'status px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm';
+                stopChecking();
+                showPlaceholder();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/result?prompt_id=${currentPromptId}`);
+                
+                // 检查响应状态
+                if (!response.ok) {
+                    console.error(`HTTP错误: ${response.status}`);
+                    return;
+                }
+                
+                // 获取响应文本并检查是否为有效JSON
+                const responseText = await response.text();
+                if (!responseText || responseText.trim() === '') {
+                    console.log('收到空响应，继续等待...');
+                    return;
+                }
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('JSON解析失败:', jsonError);
+                    console.log('响应内容:', responseText);
+                    return;
+                }
+                
+                if (result.status === 'success' && result.images) {
+                    // 完成进度条
+                    updateProgress(100, '生成完成！', parseInt(document.getElementById('steps').value), parseInt(document.getElementById('steps').value), '00:00');
+                    setTimeout(() => {
+                        displayResults(result.images);
+                        stopChecking();
+                    }, 1000);
+                } else if (result.status === 'error') {
+                    document.getElementById('status').textContent = `错误: ${result.message}`;
+                    document.getElementById('status').className = 'status px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm';
+                    stopChecking();
+                    showPlaceholder();
+                } else if (result.status === 'pending' || result.status === 'running') {
+                    // 如果还没有启动进度模拟，就启动它
+                    if (!progressSimulation) {
+                        const totalSteps = parseInt(document.getElementById('steps').value) || 30;
+                        setTimeout(() => simulateProgress(totalSteps), 2000); // 延迟2秒开始模拟
+                    }
+                }
+            } catch (error) {
+                console.error('检查结果失败:', error);
+                // 如果是网络错误，继续重试；如果是其他错误，停止检查
+                if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                    console.log('网络错误，继续重试...');
+                } else {
+                    console.error('严重错误，停止检查:', error);
+                    stopChecking();
+                }
+            }
+        }
+
+        // 显示结果
+        function displayResults(images) {
+            const results = document.getElementById('results');
+            const progressContainer = document.getElementById('progress-container');
+            
+            // 清空结果容器
+            results.innerHTML = '';
+            
+            // 隐藏进度条
+            progressContainer.classList.add('hidden');
+            
+            images.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = 'result-item mb-4';
+                div.innerHTML = `
+                    <div class="relative rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm">
+                        <img src="${img.url}" alt="生成的图像 ${index + 1}" class="w-full h-auto" />
+                        <div class="absolute inset-0 bg-black/10 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center space-x-3">
+                            <button class="bg-white text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors shadow-sm" onclick="downloadImage('${img.url}', '${img.filename}')" title="下载图片">
+                                <i class="fa fa-download"></i>
+                            </button>
+                            <button class="bg-white text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors shadow-sm" onclick="regenerateImage()" title="重新生成">
+                                <i class="fa fa-refresh"></i>
+                            </button>
+                            <button class="bg-white text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors shadow-sm" onclick="openVideoModal('${img.url}')" title="生成视频">
+                                <i class="fa fa-video-camera"></i>
+                            </button>
+        </div>
+      </div>
+                    <div class="mt-2 text-sm text-gray-500 text-center">${img.filename}</div>
+                `;
+                results.appendChild(div);
+            });
+            
+            document.getElementById('status').textContent = '生成完成';
+            document.getElementById('status').className = 'status px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm';
+        }
+
+        // 初始化进度条
+        function initProgressBar() {
+            const data = collectFormData();
+            const totalSteps = data.steps || 30;
+            
+            // 强制重置所有进度条元素
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const progressText = document.getElementById('progress-text');
+            const currentStepEl = document.getElementById('current-step');
+            const estimatedTimeEl = document.getElementById('estimated-time');
+            
+            // 临时禁用过渡动画以立即重置
+            progressBar.style.transition = 'none';
+            progressBar.style.width = '0%';
+            
+            // 重新启用过渡动画
+            setTimeout(() => {
+                progressBar.style.transition = 'width 0.3s ease';
+            }, 50);
+            
+            progressPercentage.textContent = '0%';
+            progressText.textContent = '正在初始化...';
+            currentStepEl.textContent = `步骤: 0/${totalSteps}`;
+            estimatedTimeEl.textContent = '预计: 计算中...';
+            
+            // 模拟初始化进度
+            setTimeout(() => {
+                updateProgress(5, '正在加载模型...', 0, totalSteps);
+            }, 500);
+        }
+
+        // 更新进度条
+        function updateProgress(percentage, text, currentStep, totalSteps, estimatedTime = null) {
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-percentage').textContent = `${Math.round(percentage)}%`;
+            document.getElementById('progress-text').textContent = text;
+            document.getElementById('current-step').textContent = `步骤: ${currentStep}/${totalSteps}`;
+            
+            if (estimatedTime) {
+                document.getElementById('estimated-time').textContent = `预计: ${estimatedTime}`;
+            }
+        }
+
+        // 模拟进度更新
+        let progressSimulation = null;
+        function simulateProgress(totalSteps) {
+            let currentStep = 0;
+            let percentage = 10;
+            const stepIncrement = 80 / totalSteps; // 留10%给初始化，10%给后处理
+            
+            progressSimulation = setInterval(() => {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    percentage += stepIncrement;
+                    
+                    let text = '正在生成图像...';
+                    if (currentStep <= 5) {
+                        text = '正在编码提示词...';
+                    } else if (currentStep <= totalSteps * 0.3) {
+                        text = '正在初始采样...';
+                    } else if (currentStep <= totalSteps * 0.7) {
+                        text = '正在细化图像...';
+                    } else if (currentStep <= totalSteps * 0.9) {
+                        text = '正在优化细节...';
+                    } else {
+                        text = '正在后处理...';
+                    }
+                    
+                    const remainingTime = Math.max(0, (totalSteps - currentStep) * 2);
+                    const minutes = Math.floor(remainingTime / 60);
+                    const seconds = remainingTime % 60;
+                    const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    updateProgress(percentage, text, currentStep, totalSteps, timeStr);
+                } else {
+                    clearInterval(progressSimulation);
+                    updateProgress(90, '正在保存图像...', totalSteps, totalSteps, '00:05');
+                }
+            }, 1500); // 每1.5秒更新一次
+        }
+
+        // 显示占位符
+        function showPlaceholder() {
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <div class="placeholder flex flex-col items-center justify-center py-16 text-center">
+                    <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                        <i class="fa fa-paint-brush text-3xl text-gray-400"></i>
+                    </div>
+                    <p class="text-gray-500 max-w-md">选择功能类型，设置参数后点击"生成图像"按钮开始创作</p>
+                    <p class="text-sm text-gray-400 mt-2">支持中文、日文、韩文等多语言输入</p>
+                    <p class="text-sm text-gray-400">集成高级Flux模型和后处理功能</p>
+                </div>
+            `;
+        }
+
+        // 停止检查
+        function stopChecking() {
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+            }
+            if (progressSimulation) {
+                clearInterval(progressSimulation);
+                progressSimulation = null;
+            }
+            // 重置进度条状态
+            document.getElementById('progress-container').classList.add('hidden');
+            document.getElementById('generate-btn').disabled = false;
+            document.getElementById('interrupt-btn').disabled = true;
+            
+            // 清理当前任务ID和计数器
+            currentPromptId = null;
+            checkCount = 0;
+        }
+
+
+
+        // 中断生成
+        async function interruptGeneration() {
+            try {
+                await fetch('/api/interrupt', { method: 'POST' });
+                document.getElementById('status').textContent = '已中断';
+                document.getElementById('status').className = 'status px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm';
+                stopChecking();
+            } catch (error) {
+                console.error('中断失败:', error);
+            }
+        }
+
+        // 检查队列
+        async function checkQueue() {
+            try {
+                const response = await fetch('/api/queue');
+                const queue = await response.json();
+                alert(`队列状态:\n运行中: ${queue.queue_running?.length || 0}\n等待中: ${queue.queue_pending?.length || 0}`);
+            } catch (error) {
+                console.error('检查队列失败:', error);
+            }
+        }
+
+        // 测试API
+        async function testAPIs() {
+            // 健康检查
+            try {
+                const response = await fetch('/health');
+                document.getElementById('health-status').textContent = response.ok ? '✓' : '✗';
+                document.getElementById('health-status').className = response.ok ? 'text-2xl font-bold text-green-600' : 'text-2xl font-bold text-red-600';
+            } catch (error) {
+                document.getElementById('health-status').textContent = '✗';
+                document.getElementById('health-status').className = 'text-2xl font-bold text-red-600';
+            }
+
+            // LoRA预设
+            try {
+                const response = await fetch('/api/lora/presets');
+                const data = await response.json();
+                document.getElementById('lora-status').textContent = Object.keys(data).length;
+                document.getElementById('lora-status').className = 'text-2xl font-bold text-blue-600';
+            } catch (error) {
+                document.getElementById('lora-status').textContent = '✗';
+                document.getElementById('lora-status').className = 'text-2xl font-bold text-red-600';
+            }
+
+            // 队列状态
+            try {
+                const response = await fetch('/api/queue');
+                const data = await response.json();
+                const total = (data.queue_running?.length || 0) + (data.queue_pending?.length || 0);
+                document.getElementById('queue-status').textContent = total;
+                document.getElementById('queue-status').className = 'text-2xl font-bold text-purple-600';
+            } catch (error) {
+                document.getElementById('queue-status').textContent = '✗';
+                document.getElementById('queue-status').className = 'text-2xl font-bold text-red-600';
+            }
+        }
+
+        // 下载图像
+        function downloadImage(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 重新生成
+        function regenerateImage() {
+            generateImage();
+        }
+
+        // 视频生成相关变量
+        let currentVideoTaskId = null;
+        let videoCheckInterval = null;
+
+        // 标签页切换逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            const modeContents = document.querySelectorAll('.mode-content');
+            
+            modeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const mode = this.dataset.mode;
+                    
+                    // 切换按钮状态
+                    modeButtons.forEach(btn => {
+                        btn.classList.remove('tab-active');
+                        btn.classList.add('tab-inactive');
+                    });
+                    this.classList.remove('tab-inactive');
+                    this.classList.add('tab-active');
+                    
+                    // 切换内容区域
+                    modeContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById(mode + '-content').classList.remove('hidden');
+                });
+            });
+
+            // 图片上传功能
+            const imageUploadArea = document.getElementById('image-upload-area');
+            const imageInput = document.getElementById('image-input');
+            const uploadPrompt = document.getElementById('upload-prompt');
+            const imagePreview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            const imageFilename = document.getElementById('image-filename');
+            const removeImageBtn = document.getElementById('remove-image');
+
+            imageUploadArea.addEventListener('click', () => imageInput.click());
+            
+            imageUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                imageUploadArea.classList.add('border-primary');
+            });
+            
+            imageUploadArea.addEventListener('dragleave', () => {
+                imageUploadArea.classList.remove('border-primary');
+            });
+            
+            imageUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                imageUploadArea.classList.remove('border-primary');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleImageUpload(files[0]);
+                }
+            });
+            
+            imageInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleImageUpload(e.target.files[0]);
+                }
+            });
+            
+            removeImageBtn.addEventListener('click', () => {
+                uploadPrompt.classList.remove('hidden');
+                imagePreview.classList.add('hidden');
+                imageInput.value = '';
+            });
+
+            // 视频提示词字符计数
+            const videoPrompt = document.getElementById('video-prompt');
+            const videoCharCount = document.getElementById('video-charCount');
+            const modalVideoPrompt = document.getElementById('modal-video-prompt');
+            const modalCharCount = document.getElementById('modal-char-count');
+            
+            videoPrompt.addEventListener('input', function() {
+                videoCharCount.textContent = `${this.value.length}/400`;
+            });
+            
+            modalVideoPrompt.addEventListener('input', function() {
+                modalCharCount.textContent = `${this.value.length}/400`;
+            });
+
+            // 预设提示词点击事件
+            document.querySelectorAll('.video-preset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    videoPrompt.value = this.dataset.prompt;
+                    videoCharCount.textContent = `${videoPrompt.value.length}/400`;
+                });
+            });
+            
+            document.querySelectorAll('.modal-preset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    modalVideoPrompt.value = this.dataset.prompt;
+                    modalCharCount.textContent = `${modalVideoPrompt.value.length}/400`;
+                });
+            });
+
+            // 视频生成按钮
+            document.getElementById('generate-video-btn').addEventListener('click', generateVideo);
+            
+            // 模态框控制
+            document.getElementById('close-video-modal').addEventListener('click', closeVideoModal);
+            document.getElementById('cancel-video-modal').addEventListener('click', closeVideoModal);
+            document.getElementById('confirm-generate-video').addEventListener('click', generateVideoFromModal);
+        });
+
+        // 处理图片上传
+        function handleImageUpload(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-img').src = e.target.result;
+                    document.getElementById('image-filename').textContent = file.name;
+                    document.getElementById('upload-prompt').classList.add('hidden');
+                    document.getElementById('image-preview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('请上传图片文件！');
+            }
+        }
+
+        // 打开视频生成模态框
+        function openVideoModal(imageUrl) {
+            document.getElementById('modal-source-image').src = imageUrl;
+            document.getElementById('video-modal').classList.remove('hidden');
+        }
+
+        // 关闭视频生成模态框
+        function closeVideoModal() {
+            document.getElementById('video-modal').classList.add('hidden');
+            document.getElementById('modal-video-prompt').value = '';
+            document.getElementById('modal-char-count').textContent = '0/400';
+            
+            // 重置视频结果区域
+            const modalResults = document.getElementById('modal-video-results');
+            const modalContent = document.getElementById('modal-video-content');
+            if (modalResults) {
+                modalResults.classList.add('hidden');
+            }
+            if (modalContent) {
+                modalContent.innerHTML = '';
+            }
+            
+            // 重置按钮状态
+            resetModalButtons();
+        }
+
+        // 从模态框生成视频
+        async function generateVideoFromModal() {
+            const prompt = document.getElementById('modal-video-prompt').value.trim();
+            if (!prompt) {
+                alert('请输入中文提示词！');
+                return;
+            }
+            
+            const duration = document.getElementById('modal-video-duration').value;
+            const aspectRatio = document.getElementById('modal-video-aspect').value;
+            const sourceImage = document.getElementById('modal-source-image').src;
+            
+            // 不关闭模态框，在模态框内显示生成进度
+            showModalVideoProgress();
+            
+            // 禁用生成按钮，显示进度
+            const generateBtn = document.getElementById('confirm-generate-video');
+            const cancelBtn = document.getElementById('cancel-video-modal');
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>生成中...';
+            cancelBtn.textContent = '取消生成';
+            
+            // 开始视频生成
+            await startModalVideoGeneration({
+                prompt: prompt,
+                frames: parseInt(duration),
+                aspect_ratio: aspectRatio,
+                source_image: sourceImage
+            });
+        }
+
+        // 独立视频生成
+        async function generateVideo() {
+            const prompt = document.getElementById('video-prompt').value.trim();
+            const previewImg = document.getElementById('preview-img');
+            
+            if (!prompt) {
+                alert('请输入中文提示词！');
+                return;
+            }
+            
+            if (!previewImg.src || previewImg.src === '') {
+                alert('请先上传图片！');
+                return;
+            }
+            
+            const duration = document.getElementById('video-duration').value;
+            const aspectRatio = document.getElementById('video-aspect').value;
+            const seed = document.getElementById('video-seed').value;
+            
+            await startVideoGeneration({
+                prompt: prompt,
+                frames: parseInt(duration),
+                aspect_ratio: aspectRatio,
+                seed: parseInt(seed) || -1,
+                source_image: previewImg.src
+            });
+        }
+
+        // 开始视频生成
+        async function startVideoGeneration(params) {
+            const generateBtn = document.getElementById('generate-video-btn');
+            const interruptBtn = document.getElementById('interrupt-btn');
+            
+            try {
+                generateBtn.disabled = true;
+                interruptBtn.disabled = false;
+                
+                // 显示视频结果区域和进度条
+                const videoResultsSection = document.getElementById('video-results-section');
+                const videoResults = document.getElementById('video-results');
+                videoResultsSection.classList.remove('hidden');
+                videoResults.innerHTML = `
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <i class="fa fa-video-camera text-blue-600 mr-3 text-lg"></i>
+                            <div>
+                                <p class="font-semibold text-blue-800">正在生成视频...</p>
+                                <p class="text-sm text-blue-600">预计需要2-5分钟，请耐心等待</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 视频生成进度条 -->
+                        <div class="space-y-3">
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span id="video-progress-text">准备提交任务...</span>
+                                <span id="video-progress-percentage">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                <div id="video-progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                            </div>
+                            <div id="video-progress-steps" class="text-xs text-gray-500">
+                                <div class="flex justify-between">
+                                    <span class="step-item" data-step="1">📤 提交任务</span>
+                                    <span class="step-item" data-step="2">⏳ 排队等待</span>
+                                    <span class="step-item" data-step="3">🎬 生成视频</span>
+                                    <span class="step-item" data-step="4">✅ 完成</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 初始化进度条
+                updateVideoProgress(5, '正在提交任务...', 1);
+                
+                const response = await fetch('/api/generate-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentVideoTaskId = result.task_id;
+                    updateVideoProgress(15, '任务已提交，开始生成...', 2);
+                    checkVideoStatus();
+                } else {
+                    showVideoError(result.message || '视频生成失败');
+                }
+                
+            } catch (error) {
+                console.error('视频生成请求失败:', error);
+                showVideoError('网络请求失败，请重试');
+            }
+        }
+
+        // 更新视频生成进度
+        function updateVideoProgress(percentage, text, step) {
+            const progressBar = document.getElementById('video-progress-bar');
+            const progressText = document.getElementById('video-progress-text');
+            const progressPercentage = document.getElementById('video-progress-percentage');
+            
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+            }
+            if (progressText) {
+                progressText.textContent = text;
+            }
+            if (progressPercentage) {
+                progressPercentage.textContent = `${percentage}%`;
+            }
+            
+            // 更新步骤状态
+            if (step) {
+                const steps = document.querySelectorAll('.step-item');
+                steps.forEach((stepEl, index) => {
+                    if (index + 1 <= step) {
+                        stepEl.style.fontWeight = 'bold';
+                        stepEl.style.color = '#2563eb';
+                    } else {
+                        stepEl.style.fontWeight = 'normal';
+                        stepEl.style.color = '#6b7280';
+                    }
+                });
+            }
+        }
+
+        // 检查视频生成状态
+        async function checkVideoStatus() {
+            if (!currentVideoTaskId) return;
+            
+            try {
+                const response = await fetch('/api/check-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_id: currentVideoTaskId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'done') {
+                    updateVideoProgress(100, '视频生成完成！', 4);
+                    setTimeout(() => {
+                        showVideoResult(result.video_url);
+                        stopVideoChecking();
+                    }, 1000);
+                } else if (result.status === 'error') {
+                    showVideoError(result.message || '视频生成失败');
+                    stopVideoChecking();
+                } else if (result.status === 'in_queue') {
+                    updateVideoProgress(25, '任务排队中，请稍候...', 2);
+                    videoCheckInterval = setTimeout(checkVideoStatus, 5000);
+                } else if (result.status === 'generating') {
+                    // 模拟生成进度
+                    const currentProgress = parseInt(document.getElementById('video-progress-percentage')?.textContent) || 25;
+                    const newProgress = Math.min(currentProgress + 5, 85);
+                    updateVideoProgress(newProgress, '正在生成视频中...', 3);
+                    videoCheckInterval = setTimeout(checkVideoStatus, 5000);
+                } else {
+                    showVideoError('视频任务状态异常');
+                    stopVideoChecking();
+                }
+                
+            } catch (error) {
+                console.error('检查视频状态失败:', error);
+                // 网络错误时也要继续重试
+                videoCheckInterval = setTimeout(checkVideoStatus, 5000);
+            }
+        }
+
+        // 停止视频状态检查
+        function stopVideoChecking() {
+            if (videoCheckInterval) {
+                clearTimeout(videoCheckInterval);
+                videoCheckInterval = null;
+            }
+            currentVideoTaskId = null;
+            document.getElementById('generate-video-btn').disabled = false;
+            document.getElementById('interrupt-btn').disabled = true;
+        }
+
+        // 显示视频结果
+        function showVideoResult(videoUrl) {
+            // 完成进度条动画
+            completeVideoProgress();
+            
+            // 延迟1.5秒后显示最终结果
+            setTimeout(() => {
+                const videoResults = document.getElementById('video-results');
+                videoResults.innerHTML = `
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-center">
+                            <i class="fa fa-check-circle text-green-600 mr-3"></i>
+                            <div>
+                                <p class="font-medium text-green-800">视频生成完成！</p>
+                                <p class="text-sm text-green-600">您的AI视频已成功创建</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm">
+                        <video controls class="w-full h-auto" preload="metadata">
+                            <source src="${videoUrl}" type="video/mp4">
+                            您的浏览器不支持视频播放。
+                        </video>
+                        <div class="p-4 bg-gray-50 flex justify-between items-center">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm text-gray-600">
+                                    <i class="fa fa-video-camera mr-1"></i>AI生成视频
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    <i class="fa fa-clock-o mr-1"></i>刚刚生成
+                                </span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="regenerateVideo()" class="btn-secondary text-sm">
+                                    <i class="fa fa-refresh mr-1"></i>重新生成
+                                </button>
+                                <button onclick="downloadVideo('${videoUrl}')" class="btn-primary text-sm">
+                                    <i class="fa fa-download mr-1"></i>下载视频
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }, 1500);
+        }
+
+        // 显示视频错误
+        function showVideoError(message) {
+            const videoResults = document.getElementById('video-results');
+            videoResults.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fa fa-exclamation-circle text-red-600 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-red-800">视频生成失败</p>
+                            <p class="text-sm text-red-600">${message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 视频进度条相关变量
+        let videoProgressInterval = null;
+        let videoProgressValue = 0;
+
+        // 显示视频生成进度条
+        function showVideoProgressBar() {
+            const videoResultsSection = document.getElementById('video-results-section');
+            const videoResults = document.getElementById('video-results');
+            
+            videoResultsSection.classList.remove('hidden');
+            videoResults.innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                        <i class="fa fa-video-camera text-blue-600 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-blue-800">正在生成视频...</p>
+                            <p class="text-sm text-blue-600">AI正在根据您的描述创作视频，请耐心等待</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 进度条 -->
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div id="video-progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    
+                    <!-- 进度信息 -->
+                    <div class="flex justify-between items-center text-sm">
+                        <span id="video-progress-text" class="text-blue-700">正在初始化...</span>
+                        <span id="video-progress-percentage" class="text-blue-700 font-medium">0%</span>
+                    </div>
+                    
+                    <!-- 预估时间 -->
+                    <div class="mt-3 text-xs text-blue-600 text-center">
+                        <i class="fa fa-clock-o mr-1"></i>
+                        预计需要 <span id="video-estimated-time">2-3</span> 分钟完成
+                    </div>
+                </div>
+            `;
+            
+            // 启动进度条动画
+            startVideoProgressAnimation();
+        }
+
+        // 启动视频进度条动画
+        function startVideoProgressAnimation() {
+            videoProgressValue = 0;
+            const progressBar = document.getElementById('video-progress-bar');
+            const progressText = document.getElementById('video-progress-text');
+            const progressPercentage = document.getElementById('video-progress-percentage');
+            
+            const stages = [
+                { progress: 15, text: "正在分析图片内容...", duration: 3000 },
+                { progress: 30, text: "正在理解提示词语义...", duration: 4000 },
+                { progress: 50, text: "正在生成视频帧序列...", duration: 8000 },
+                { progress: 70, text: "正在渲染视频效果...", duration: 6000 },
+                { progress: 85, text: "正在优化视频质量...", duration: 4000 },
+                { progress: 95, text: "正在完成最后处理...", duration: 2000 }
+            ];
+            
+            let currentStage = 0;
+            
+            function updateProgress() {
+                if (currentStage < stages.length) {
+                    const stage = stages[currentStage];
+                    const startProgress = videoProgressValue;
+                    const targetProgress = stage.progress;
+                    const startTime = Date.now();
+                    
+                    progressText.textContent = stage.text;
+                    
+                    function animateToTarget() {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / stage.duration, 1);
+                        
+                        videoProgressValue = startProgress + (targetProgress - startProgress) * progress;
+                        progressBar.style.width = `${videoProgressValue}%`;
+                        progressPercentage.textContent = `${Math.round(videoProgressValue)}%`;
+                        
+                        if (progress < 1) {
+                            videoProgressInterval = requestAnimationFrame(animateToTarget);
+                        } else {
+                            currentStage++;
+                            setTimeout(updateProgress, 500); // 短暂停顿后进入下一阶段
+                        }
+                    }
+                    
+                    animateToTarget();
+                }
+            }
+            
+            updateProgress();
+        }
+
+        // 停止视频进度条动画
+        function stopVideoProgressAnimation() {
+            if (videoProgressInterval) {
+                cancelAnimationFrame(videoProgressInterval);
+                videoProgressInterval = null;
+            }
+        }
+
+        // 完成视频进度条
+        function completeVideoProgress() {
+            stopVideoProgressAnimation();
+            
+            const progressBar = document.getElementById('video-progress-bar');
+            const progressText = document.getElementById('video-progress-text');
+            const progressPercentage = document.getElementById('video-progress-percentage');
+            
+            if (progressBar && progressText && progressPercentage) {
+                progressBar.style.width = '100%';
+                progressText.textContent = '视频生成完成！';
+                progressPercentage.textContent = '100%';
+                
+                // 添加完成动画效果
+                progressBar.classList.add('animate-pulse');
+                setTimeout(() => {
+                    if (progressBar) {
+                        progressBar.classList.remove('animate-pulse');
+                    }
+                }, 1000);
+            }
+        }
+
+                 // 重新生成视频
+         function regenerateVideo() {
+             // 获取当前的参数（如果可用的话）
+             const lastParams = {
+                 prompt: document.getElementById('modal-video-prompt')?.value || document.getElementById('video-prompt')?.value || '千军万马',
+                 frames: 121,
+                 aspect_ratio: "16:9",
+                 seed: -1
+             };
+             
+             // 显示进度条
+             showVideoProgressBar();
+             
+             // 重新开始生成
+             startVideoGeneration(lastParams);
+         }
+
+         // 下载视频
+         function downloadVideo(url) {
+             try {
+                 // 使用fetch获取视频数据并下载
+                 fetch(url)
+                     .then(response => {
+                         if (!response.ok) {
+                             throw new Error(`HTTP error! status: ${response.status}`);
+                         }
+                         return response.blob();
+                     })
+                     .then(blob => {
+                         const downloadUrl = window.URL.createObjectURL(blob);
+                         const a = document.createElement('a');
+                         a.style.display = 'none';
+                         a.href = downloadUrl;
+                         a.download = `ai_generated_video_${Date.now()}.mp4`;
+                         document.body.appendChild(a);
+                         a.click();
+                         window.URL.revokeObjectURL(downloadUrl);
+                         document.body.removeChild(a);
+                         
+                         // 显示下载成功提示
+                         showDownloadSuccess();
+                     })
+                     .catch(error => {
+                         console.error('下载失败:', error);
+                         // 如果下载失败，尝试直接打开链接
+                         const a = document.createElement('a');
+                         a.href = url;
+                         a.target = '_blank';
+                         a.download = `ai_generated_video_${Date.now()}.mp4`;
+                         document.body.appendChild(a);
+                         a.click();
+                         document.body.removeChild(a);
+                     });
+                 
+             } catch (error) {
+                 console.error('下载失败:', error);
+                 // 最后的备选方案：直接打开链接
+                 window.open(url, '_blank');
+             }
+         }
+
+         // 显示下载成功提示
+         function showDownloadSuccess() {
+             // 创建一个临时的成功提示
+             const toast = document.createElement('div');
+             toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+             toast.innerHTML = '<i class="fa fa-check mr-2"></i>视频下载成功！';
+             document.body.appendChild(toast);
+             
+             // 3秒后自动移除
+             setTimeout(() => {
+                                 if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // 完成视频进度条动画
+        function completeVideoProgress() {
+            updateVideoProgress(90, '视频渲染中...', 4);
+            setTimeout(() => {
+                updateVideoProgress(100, '视频生成完成！', 4);
+            }, 500);
+        }
+
+        // 重新生成视频
+        function regenerateVideo() {
+            if (confirm('确定要重新生成视频吗？这将消耗新的积分。')) {
+                // 重新获取最后使用的参数
+                const lastPrompt = document.getElementById('modal-video-prompt')?.value || 
+                                 document.getElementById('video-prompt')?.value || '';
+                const lastDuration = document.getElementById('modal-video-duration')?.value || 
+                                   document.getElementById('video-duration')?.value || '121';
+                const lastAspect = document.getElementById('modal-video-aspect')?.value || 
+                                 document.getElementById('video-aspect')?.value || '16:9';
+                
+                if (lastPrompt) {
+                    startVideoGeneration({
+                        prompt: lastPrompt,
+                        frames: parseInt(lastDuration),
+                        aspect_ratio: lastAspect,
+                        seed: -1  // 随机种子重新生成
+                    });
+                } else {
+                    alert('无法获取生成参数，请重新设置后生成');
+                }
+            }
+        }
+
+        // 计算视频文件大小
+        function calculateVideoSize(url) {
+            fetch(url, { method: 'HEAD' })
+                .then(response => {
+                    const contentLength = response.headers.get('content-length');
+                    if (contentLength) {
+                        const sizeInBytes = parseInt(contentLength);
+                        const sizeInMB = (sizeInBytes / 1024 / 1024).toFixed(1);
+                        const sizeElement = document.getElementById('video-file-size');
+                        if (sizeElement) {
+                            sizeElement.textContent = `文件大小: ${sizeInMB}MB`;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.log('无法获取文件大小:', error);
+                    const sizeElement = document.getElementById('video-file-size');
+                    if (sizeElement) {
+                        sizeElement.textContent = '文件大小: 未知';
+                    }
+                });
+        }
+
+        // 重新播放视频
+        function replayVideo() {
+            const video = document.querySelector('#video-results video');
+            if (video) {
+                video.currentTime = 0;
+                video.play();
+            }
+        }
+
+        // 显示模态框内的视频生成进度
+        function showModalVideoProgress() {
+            const modalResults = document.getElementById('modal-video-results');
+            const modalContent = document.getElementById('modal-video-content');
+            
+            modalResults.classList.remove('hidden');
+            modalContent.innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center mb-3">
+                        <i class="fa fa-video-camera text-blue-600 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-blue-800">正在生成视频...</p>
+                            <p class="text-sm text-blue-600">CBIT Pro正在根据您的图片和描述创作高质量视频</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 进度条 -->
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                        <div id="modal-progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    
+                    <!-- 进度信息 -->
+                    <div class="flex justify-between items-center text-sm">
+                        <span id="modal-progress-text" class="text-blue-700">正在初始化...</span>
+                        <span id="modal-progress-percentage" class="text-blue-700 font-medium">0%</span>
+                    </div>
+                    
+                    <!-- 预估时间 -->
+                    <div class="mt-2 text-xs text-blue-600 text-center">
+                        <i class="fa fa-clock-o mr-1"></i>
+                        预计需要 2-3 分钟完成 (CBIT Pro高质量生成)
+                    </div>
+                </div>
+            `;
+        }
+
+        // 模态框视频生成主函数
+        async function startModalVideoGeneration(params) {
+            let modalCurrentTaskId = null;
+            
+            try {
+                // 初始化进度
+                updateModalProgress(5, '正在提交任务...', 1);
+                
+                const response = await fetch('/api/generate-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    modalCurrentTaskId = result.task_id;
+                    updateModalProgress(15, '任务已提交，开始生成...', 2);
+                    checkModalVideoStatus(modalCurrentTaskId);
+                } else {
+                    showModalVideoError(result.message || '视频生成失败');
+                }
+                
+            } catch (error) {
+                console.error('模态框视频生成请求失败:', error);
+                showModalVideoError('网络请求失败，请重试');
+            }
+        }
+
+        // 更新模态框进度
+        function updateModalProgress(percentage, text, step) {
+            const progressBar = document.getElementById('modal-progress-bar');
+            const progressText = document.getElementById('modal-progress-text');
+            const progressPercentage = document.getElementById('modal-progress-percentage');
+            
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+            }
+            if (progressText) {
+                progressText.textContent = text;
+            }
+            if (progressPercentage) {
+                progressPercentage.textContent = `${percentage}%`;
+            }
+        }
+
+        // 检查模态框视频状态
+        function checkModalVideoStatus(taskId) {
+            const checkStatus = async () => {
+                try {
+                    const response = await fetch('/api/check-video', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task_id: taskId })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'done') {
+                        updateModalProgress(100, '视频生成完成！', 4);
+                        setTimeout(() => {
+                            showModalVideoResult(result.video_url);
+                        }, 1000);
+                    } else if (result.status === 'error') {
+                        showModalVideoError('视频生成失败');
+                    } else if (result.status === 'in_queue') {
+                        updateModalProgress(25, '任务排队中...', 2);
+                        setTimeout(checkStatus, 3000);
+                    } else if (result.status === 'generating') {
+                        const progress = 30 + Math.random() * 40; // 30-70%的随机进度
+                        updateModalProgress(progress, '正在生成视频...', 3);
+                        setTimeout(checkStatus, 3000);
+                    } else {
+                        setTimeout(checkStatus, 3000);
+                    }
+                } catch (error) {
+                    console.error('检查视频状态失败:', error);
+                    showModalVideoError('状态检查失败，请重试');
+                }
+            };
+            
+            checkStatus();
+        }
+
+        // 显示模态框视频结果
+        function showModalVideoResult(videoUrl) {
+            const modalContent = document.getElementById('modal-video-content');
+            modalContent.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                    <div class="flex items-center">
+                        <i class="fa fa-check-circle text-green-600 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-green-800">视频生成完成！</p>
+                            <p class="text-sm text-green-600">您的CBIT Pro高质量视频已成功创建</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm">
+                    <video controls class="w-full h-auto" preload="metadata">
+                        <source src="${videoUrl}" type="video/mp4">
+                        您的浏览器不支持视频播放。
+                    </video>
+                    <div class="p-3 bg-gray-50 flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm text-gray-600">
+                                <i class="fa fa-video-camera mr-1"></i>CBIT Pro生成
+                            </span>
+                            <span class="text-xs text-gray-500">
+                                <i class="fa fa-clock-o mr-1"></i>刚刚生成
+                            </span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="downloadModalVideo('${videoUrl}')" class="btn-primary text-sm">
+                                <i class="fa fa-download mr-1"></i>下载视频
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 重置按钮状态
+            resetModalButtons();
+        }
+
+        // 显示模态框视频错误
+        function showModalVideoError(message) {
+            const modalContent = document.getElementById('modal-video-content');
+            modalContent.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fa fa-exclamation-circle text-red-600 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-red-800">视频生成失败</p>
+                            <p class="text-sm text-red-600">${message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 重置按钮状态
+            resetModalButtons();
+        }
+
+        // 重置模态框按钮状态
+        function resetModalButtons() {
+            const generateBtn = document.getElementById('confirm-generate-video');
+            const cancelBtn = document.getElementById('cancel-video-modal');
+            
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fa fa-video-camera mr-2"></i>生成视频 <span class="text-xs bg-yellow-500 text-black px-1 py-0.5 rounded ml-1">Pro</span>';
+            cancelBtn.textContent = '关闭';
+        }
+
+        // 下载模态框视频
+        function downloadModalVideo(url) {
+            try {
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = downloadUrl;
+                        a.download = `jimeng_pro_video_${Date.now()}.mp4`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(downloadUrl);
+                        document.body.removeChild(a);
+                        
+                        // 显示下载成功提示
+                        alert('视频下载成功！');
+                    })
+                    .catch(error => {
+                        console.error('下载失败:', error);
+                        // 如果下载失败，尝试直接打开链接
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.target = '_blank';
+                        a.download = `jimeng_pro_video_${Date.now()}.mp4`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    });
+            } catch (error) {
+                console.error('下载视频失败:', error);
+                alert('下载失败，请重试');
+            }
+        }
+   </script>
+
+    <!-- 视频生成模态框 -->
+    <div id="video-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">基于图片生成视频</h3>
+                    <button id="close-video-modal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- 原图预览 -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">原图预览</h4>
+                        <img id="modal-source-image" src="" alt="原图" class="w-full max-h-64 object-contain rounded-lg border">
+                    </div>
+                    
+                    <!-- 中文提示词 -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">中文提示词</h4>
+                        <textarea id="modal-video-prompt" class="w-full bg-white border border-gray-300 rounded-lg p-3 h-24 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入中文描述，例如：千军万马、海浪拍打岸边等..."></textarea>
+                        <div class="mt-1 text-sm text-gray-500 flex justify-between">
+                            <span>仅支持中文，建议400字以内</span>
+                            <span id="modal-char-count">0/400</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 快速选择 -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">热门效果</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button class="modal-preset-btn text-xs px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors text-left" data-prompt="千军万马奔腾在广阔的草原上，尘土飞扬，气势恢宏">千军万马</button>
+                            <button class="modal-preset-btn text-xs px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors text-left" data-prompt="海浪拍打在礁石上，水花四溅，阳光照射下波光粼粼">海浪拍岸</button>
+                            <button class="modal-preset-btn text-xs px-3 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors text-left" data-prompt="樱花花瓣在春风中飘落，粉色花瓣满天飞舞，唯美浪漫">樱花飘落</button>
+                            <button class="modal-preset-btn text-xs px-3 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors text-left" data-prompt="城市夜景中霓虹灯闪烁，车流如河，灯火辉煌">都市夜景</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 视频参数 -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">视频时长</label>
+                            <select id="modal-video-duration" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                <option value="121">5秒 (121帧)</option>
+                                <option value="241">10秒 (241帧)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">宽高比</label>
+                            <select id="modal-video-aspect" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                <option value="16:9">16:9 (横屏)</option>
+                                <option value="9:16">9:16 (竖屏)</option>
+                                <option value="1:1">1:1 (正方形)</option>
+                                <option value="4:3">4:3 (标准)</option>
+                                <option value="3:4">3:4 (竖版标准)</option>
+                                <option value="21:9">21:9 (超宽屏)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- 视频生成结果区域 -->
+                    <div id="modal-video-results" class="hidden mt-4">
+                        <div class="border-t border-gray-200 pt-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                <i class="fa fa-video-camera text-primary mr-2"></i>视频生成结果
+                            </h4>
+                            <div id="modal-video-content"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="flex space-x-3 pt-4">
+                        <button id="cancel-video-modal" class="flex-1 btn-secondary">取消</button>
+                        <button id="confirm-generate-video" class="flex-1 btn-primary">
+                            <i class="fa fa-video-camera mr-2"></i>生成视频 <span class="text-xs bg-yellow-500 text-black px-1 py-0.5 rounded ml-1">Pro</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 视频结果显示区域 -->
+    <div id="video-results-section" class="hidden mt-6">
+        <div class="glass-effect rounded-xl p-5">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fa fa-video-camera text-primary mr-2"></i> 视频生成结果
+            </h3>
+            <div id="video-results"></div>
+        </div>
+    </div>
+</body>
+</html> 

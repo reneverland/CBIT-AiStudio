@@ -1,0 +1,18 @@
+# BaiduCBIT 本地版本依赖 v2.0
+
+# Web框架
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-SQLAlchemy==3.0.5
+
+# HTTP客户端
+requests==2.31.0
+
+# 环境变量管理
+python-dotenv==1.0.0
+
+# 数据库
+SQLAlchemy==2.0.21
+
+# 其他工具
+Werkzeug==2.3.7
