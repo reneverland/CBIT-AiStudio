@@ -172,23 +172,39 @@ pm2 startup
 
 ## 🛠️ 常见问题解决
 
-### 0. 一键修复脚本（推荐）
+### 0. 数据库权限问题专项修复（推荐）
 
-如果遇到Docker Compose版本警告或数据库权限问题，可以使用一键修复脚本：
+如果遇到 `sqlite3.OperationalError: unable to open database file` 错误，使用专项修复脚本：
 
 ```bash
-# 在项目目录中运行
+# 专门修复数据库权限问题
+sudo ./fix_database_permissions.sh
+```
+
+**专项修复内容**:
+- ✅ 停止运行中的容器
+- ✅ 修复instance目录权限 (chmod 777)
+- ✅ 修复数据库文件权限 (chmod 666)
+- ✅ 测试数据库连接
+- ✅ 创建安全启动脚本
+- ✅ 备份现有数据库
+
+### 0.1. 综合问题修复
+
+如果遇到Docker Compose版本警告或其他部署问题：
+
+```bash
+# 综合修复脚本
 ./fix_baota_issues.sh
 ```
 
-**修复内容**:
+**综合修复内容**:
 - ✅ 移除Docker Compose过时的`version`字段
 - ✅ 修复数据库目录权限问题 (chmod 777)
 - ✅ 清理Docker缓存并重新构建
 - ✅ 自动重启应用并验证状态
 
-### 1. 端口占用问题
-```bash
+### 1. 端口占用问题```bash
 # 查看端口占用
 netstat -tlnp | grep :5000
 
