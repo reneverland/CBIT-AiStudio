@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from flask import Flask, render_template, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from dotenv import load_dotenv
 import requests
 
@@ -245,7 +246,7 @@ def health():
     # 检查数据库连接
     db_healthy = True
     try:
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
         db_status = "connected"
     except Exception as e:
         db_healthy = False
@@ -344,7 +345,7 @@ def main():
             print(f"📁 数据库URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
             
             # 验证数据库连接
-            result = db.session.execute('SELECT COUNT(*) FROM local_jobs').fetchone()
+            result = db.session.execute(text('SELECT COUNT(*) FROM local_jobs')).fetchone()
             print(f"📊 数据库记录数: {result[0]}")
             
         except Exception as e:

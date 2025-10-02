@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from flask import Flask, render_template, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from dotenv import load_dotenv
 import requests
 
