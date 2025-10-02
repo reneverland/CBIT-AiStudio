@@ -104,13 +104,37 @@ jobs:
     - name: Test Docker container
       run: |
         # Start container in background
-        docker run -d --name test-container -p 5000:5000 cbit-aistudio:${{ github.sha }}
+        docker run -d --name test-container -p 5000:5000 \
+          -e SERVER_URL=http://113.106.62.42:9500 \
+          -e DEBUG=false \
+          -e CI=true \
+          cbit-aistudio:${{ github.sha }}
         
-        # Wait for container to start
-        sleep 10
+        # Wait for container to start and check logs
+        echo "Waiting for container to start..."
+        sleep 15
         
-        # Test health endpoint
-        curl -f http://localhost:5000/health || exit 1
+        # Check container status
+        docker ps -a
+        echo "Container logs:"
+        docker logs test-container
+        
+        # Test health endpoint with retries
+        echo "Testing health endpoint..."
+        for i in {1..5}; do
+          if curl -f http://localhost:5000/health; then
+            echo "✅ Health check passed on attempt $i"
+            break
+          else
+            echo "❌ Health check failed on attempt $i, retrying..."
+            sleep 5
+          fi
+          if [ $i -eq 5 ]; then
+            echo "❌ All health check attempts failed"
+            docker logs test-container
+            exit 1
+          fi
+        done
         
         # Stop container
         docker stop test-container
