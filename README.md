@@ -16,6 +16,8 @@
 
 📹 **演示视频**: [`showcase_instruction_2025-10-02 13.42.46.mov`](./showcase_instruction_2025-10-02%2013.42.46.mov)
 
+> 注意：由于文件大小限制，录屏文件未包含在Git仓库中。如需查看演示，请联系开发者获取。
+
 **主要特性演示**:
 - 🚀 **一键生成**: 简化的操作流程，输入提示词即可快速生成
 - 🎨 **精选模板**: 人像摄影、生活场景、艺术风格等专业预设
@@ -357,6 +359,8 @@ result = requests.get(f'/api/result?prompt_id={response.json()["prompt_id"]}')
 > **Latest Optimized Interface Demo** - Showcasing the new user-friendly interface design and one-click generation functionality
 
 📹 **Demo Video**: [`showcase_instruction_2025-10-02 13.42.46.mov`](./showcase_instruction_2025-10-02%2013.42.46.mov)
+
+> Note: Due to file size limitations, the demo video is not included in the Git repository. Please contact the developer for access.
 
 **Key Features Demonstrated**:
 - 🚀 **One-Click Generation**: Simplified workflow, generate images by simply entering prompts

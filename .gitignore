@@ -208,3 +208,12 @@ docker-data/
 *.mov
 *.mp4
 *.avi
+
+# 测试覆盖率报告
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# 安全扫描报告
+bandit-report.json
