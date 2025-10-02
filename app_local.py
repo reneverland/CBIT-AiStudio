@@ -69,6 +69,12 @@ api_client = RemoteAPIClient()
 database_uri = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///instance/local_cache.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# 确保数据库目录存在
+db_path = database_uri.replace('sqlite:///', '')
+db_dir = os.path.dirname(db_path)
+if db_dir:
+    os.makedirs(db_dir, exist_ok=True)
 db = SQLAlchemy(app)
 
 # 本地缓存模型
@@ -282,8 +288,27 @@ def main():
     
     # 创建数据库表
     with app.app_context():
-        db.create_all()
-        print("✓ 本地数据库已初始化")
+        try:
+            # 确保数据库目录存在
+            db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+            db_dir = os.path.dirname(db_path)
+            if db_dir:
+                os.makedirs(db_dir, exist_ok=True)
+                print(f"✓ 数据库目录已创建: {db_dir}")
+            
+            db.create_all()
+            print("✓ 本地数据库已初始化")
+        except Exception as e:
+            print(f"⚠️  数据库初始化失败: {e}")
+            # 在CI环境中，如果数据库初始化失败，使用内存数据库
+            ci_env = os.getenv('CI', '').lower() == 'true'
+            if ci_env:
+                print("🔧 CI环境检测到，切换到内存数据库")
+                app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+                db.create_all()
+                print("✓ 内存数据库已初始化")
+            else:
+                raise
     
     # 检查服务器连接（CI环境中跳过以加快启动）
     ci_env = os.getenv('CI', '').lower() == 'true'

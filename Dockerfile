@@ -27,8 +27,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制应用代码
 COPY . .
 
-# 创建必要的目录
-RUN mkdir -p /app/downloads /app/static/uploads /app/instance
+# 创建必要的目录并设置权限
+RUN mkdir -p /app/downloads /app/static/uploads /app/instance && \
+    chmod 755 /app/instance && \
+    chown -R root:root /app
 
 # 设置数据库路径为容器内默认位置
 ENV SQLALCHEMY_DATABASE_URI=sqlite:///instance/local_cache.db

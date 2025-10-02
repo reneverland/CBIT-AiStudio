@@ -108,6 +108,7 @@ jobs:
           -e SERVER_URL=http://113.106.62.42:9500 \
           -e DEBUG=false \
           -e CI=true \
+          -e SQLALCHEMY_DATABASE_URI=sqlite:///tmp/test_cache.db \
           cbit-aistudio:${{ github.sha }}
         
         # Wait for container to start and check logs
