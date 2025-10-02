@@ -1,9 +1,6 @@
 # BaiduCBIT - 基于ComfyUI的企业级AI图像生成平台
 
-[![GitHub stars](https://img.shields.io/github/stars/reneverland/CBIT-AiStudio?style=social)](https://github.com/reneverland/CBIT-AiStudio)
-[![GitHub forks](https://img.shields.io/github/forks/reneverland/CBIT-AiStudio?style=social)](https://github.com/reneverland/CBIT-AiStudio)
-[![GitHub issues](https://img.shields.io/github/issues/reneverland/CBIT-AiStudio)](https://github.com/reneverland/CBIT-AiStudio/issues)
-[![GitHub license](https://img.shields.io/github/license/reneverland/CBIT-AiStudio)](https://github.com/reneverland/CBIT-AiStudio/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Latest-orange.svg)](https://github.com/comfyanonymous/ComfyUI)
@@ -344,10 +341,7 @@ result = requests.get(f'/api/result?prompt_id={response.json()["prompt_id"]}')
 
 # BaiduCBIT - Enterprise-Level AI Image Generation Platform Based on ComfyUI
 
-[![GitHub stars](https://img.shields.io/github/stars/reneverland/CBIT-AiStudio?style=social)](https://github.com/reneverland/CBIT-AiStudio)
-[![GitHub forks](https://img.shields.io/github/forks/reneverland/CBIT-AiStudio?style=social)](https://github.com/reneverland/CBIT-AiStudio)
-[![GitHub issues](https://img.shields.io/github/issues/reneverland/CBIT-AiStudio)](https://github.com/reneverland/CBIT-AiStudio/issues)
-[![GitHub license](https://img.shields.io/github/license/reneverland/CBIT-AiStudio)](https://github.com/reneverland/CBIT-AiStudio/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Latest-orange.svg)](https://github.com/comfyanonymous/ComfyUI)
