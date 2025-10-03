@@ -11,7 +11,7 @@
 ### 界面展示录屏 (2025-10-02)
 > **最新优化界面演示** - 展示了全新的用户友好界面设计和一键生成功能
 
-📹 **演示视频**: [`showcase_instruction_2025-10-02 13.42.46.mov`](./showcase_instruction_2025-10-02%2013.42.46.mov)
+📹 **演示视频**: [`showcase_instruction.mov`](./showcase_instruction.mov)
 
 > 注意：由于文件大小限制，录屏文件未包含在Git仓库中。如需查看演示，请联系开发者获取。
 
@@ -352,7 +352,7 @@ result = requests.get(f'/api/result?prompt_id={response.json()["prompt_id"]}')
 ### UI Showcase Recording (2025-10-02)
 > **Latest Optimized Interface Demo** - Showcasing the new user-friendly interface design and one-click generation functionality
 
-📹 **Demo Video**: [`showcase_instruction_2025-10-02 13.42.46.mov`](./showcase_instruction_2025-10-02%2013.42.46.mov)
+📹 **Demo Video**: [`showcase_instruction.mov`](./showcase_instruction.mov)
 
 > Note: Due to file size limitations, the demo video is not included in the Git repository. Please contact the developer for access.
 
